@@ -27,7 +27,9 @@ public class MainGUI extends JFrame
             employeePanelTop, innerEmployeePanel, employeeDOBPanel, 
             employeePanelBottom, employeePayPanel, 
             inventoryPanel = new JPanel(), inventoryPanelTop, inventoryPanelBottom,
-            searchPanel = new JPanel(), searchPanelTop, searchPanelBottom,
+            searchPanel = new JPanel(), searchPanelTop, searchPanelBottom, 
+            salesPanel = new JPanel(), salesPanelTop, salesPanelBototm,
+            customerPanel = new JPanel(), customerPanelTop, customerPanelBottom, 
             employeeButtonPanel, inventoryButtonPanel, searchButtonPanel;
     
     //JLabels for HR Tab
@@ -57,7 +59,8 @@ public class MainGUI extends JFrame
     
     //ButtonGroup + JRadio Buttons
     private final ButtonGroup searchBox;
-    private JButton exitButton, submitButton, createButton, searchButton;
+    private JButton exitButton, submitButton, createButton, 
+            searchButton;
     
     //JRadioButtons to track search selection
     JRadioButton employeeButton, productButton;
@@ -70,10 +73,6 @@ public class MainGUI extends JFrame
     //boolean
     boolean keepGoing = true;
    
-
-     
-    
-    
     public MainGUI()
     {
         //Create App title and layout
@@ -87,6 +86,8 @@ public class MainGUI extends JFrame
         tabPane.addTab("HR", null, employeePanel, "Human Resource");
         tabPane.addTab("Inventory", null, inventoryPanel, "Inventory");
         tabPane.addTab("Search", null, searchPanel, "Search");
+        tabPane.addTab("Sales", null, salesPanel, "Sales");
+        tabPane.addTab("Customers", null, customerPanel, "Customers");
         
         //Build Panels
         buildMainPanel();
@@ -107,7 +108,7 @@ public class MainGUI extends JFrame
         employeePanel.add(employeePanelBottom, BorderLayout.CENTER);
         employeePanel.add(employeeButtonPanel, BorderLayout.SOUTH);
         
-        //Add welcomePanel and tabbedPane to JFrame
+        //Add welcomePanel and tabbedPanel to JFrame
         add(welcomePanel, BorderLayout.NORTH);
         add(tabPane, BorderLayout.CENTER);
         
@@ -305,11 +306,15 @@ public class MainGUI extends JFrame
             if (employeeType.getSelectedIndex() == 0)
             {
                 employeeType.setSelectedIndex(0);
+                
                 employeePayPanel.remove(commissionRateLabel);
                 employeePayPanel.remove(commissionRateText);
+                
                 employeePayPanel.remove(baseSalaryLabel);
                 employeePayPanel.remove(baseSalaryText);
+                
                 employeePanelBottom.revalidate();
+                
                 employeePayPanel.add(hourlyRateLabel);
                 employeePayPanel.add(hourlyRateText);
             }
@@ -317,11 +322,15 @@ public class MainGUI extends JFrame
             if (employeeType.getSelectedIndex() == 1)
             {
                 employeeType.setSelectedIndex(1);
+                
                 employeePayPanel.remove(hourlyRateLabel);
                 employeePayPanel.remove(hourlyRateText);
+                
                 employeePayPanel.remove(commissionRateLabel);
                 employeePayPanel.remove(commissionRateText);
+                
                 employeePayPanel.revalidate();
+                
                 employeePayPanel.add(baseSalaryLabel);
                 employeePayPanel.add(baseSalaryText);
             }
@@ -329,11 +338,15 @@ public class MainGUI extends JFrame
             if (employeeType.getSelectedIndex() == 2)
             {
                 employeeType.setSelectedIndex(2);
+                
                 employeePayPanel.remove(hourlyRateLabel);
                 employeePayPanel.remove(hourlyRateText);
+                
                 employeePayPanel.remove(baseSalaryLabel);
                 employeePayPanel.remove(baseSalaryText);
+                
                 employeePayPanel.revalidate();
+                
                 employeePayPanel.add(commissionRateLabel);
                 employeePayPanel.add(commissionRateText); 
             }
@@ -352,7 +365,7 @@ public class MainGUI extends JFrame
             
             }//end of action performed 
         });//end of action listen
-    }//end of build employee class
+    }//end of buildEmployeePanel
     
     private void buildInventoryPanel()
     {
@@ -420,7 +433,8 @@ public class MainGUI extends JFrame
         
         inventoryPanelBottom.add(manufacturerIDLabel);
         inventoryPanelBottom.add(manufacturerIDText);
-    }
+        
+    } // end of buildInventoryPanel()
     
     private void buildSearchPanel()
     {
@@ -467,20 +481,25 @@ public class MainGUI extends JFrame
         //Product Selection Textboxes
         searchProductNameText = new JTextField(15);
         searchProductNumberText = new JTextField(10);
-    }
+        
+    } // end of buildSearchPanel()
     
     private void buildEmployeeButtonPanel()
     {
         //Create employee button panel, submit button, and exit button
         employeeButtonPanel = new JPanel();
         createButton = new JButton("Create");
+        exitButton = new JButton("Exit");
         
         //Add the specific action listener for each button
-        createButton.addActionListener(new CreateButtonListener());    
+        createButton.addActionListener(new CreateButtonListener()); 
+        exitButton.addActionListener(new ExitButtonListener());
         
         //Add the JButtons to the buttonPanel
         employeeButtonPanel.add(createButton);
-    }
+        employeeButtonPanel.add(exitButton);
+        
+    } // end of buildEmployeeButtonPanel()
     
     private void buildInventoryButtonPanel()
     {
