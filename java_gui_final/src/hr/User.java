@@ -31,20 +31,11 @@ public class User
         isAdmin = selection;
     }
     
-    public String printUserStatus()
+    //This methods sends true if the user is an admin
+    public boolean userIsAdmin()
     {
-        String response = "";
-        
-        if(isAdmin == true)
-        {
-            response = "Admin";
-        }
-        if(isAdmin == false)
-        {
-            response = "Regular";
-        }
-        
-        return response;
+        return isAdmin;
     }
+
     
 } // end of User class

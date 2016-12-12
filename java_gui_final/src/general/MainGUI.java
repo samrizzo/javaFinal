@@ -13,6 +13,7 @@ import hr.User;
 import java.util.Arrays;
 
 
+
 /**
  *
  * @author Sam Rizzo
@@ -27,10 +28,14 @@ public class MainGUI extends JFrame
             employeePanel = new JPanel(),mainEmployeePanel, employeePanelTop, 
             innerEmployeePanel, employeeDOBPanel, employeePanelBottom, employeePayPanel, 
             inventoryPanel = new JPanel(), inventoryPanelTop, inventoryPanelBottom,
-            searchPanel = new JPanel(), searchPanelTop, searchPanelBottom, 
+            searchPanel = new JPanel(), innerSearchPanel, searchPanelTop, searchPanelBottom, 
             salesPanel = new JPanel(), salesPanelTop, salesPanelBototm,
             customerPanel = new JPanel(), customerPanelTop, customerPanelBottom, 
-            employeeButtonPanel, inventoryButtonPanel, searchButtonPanel;
+            employeeButtonPanel, inventoryButtonPanel, searchButtonPanel,
+            adminPanel;
+    
+    //Create Tabbed Interface
+    JTabbedPane tabPane = new JTabbedPane();
     
     //JLabels for HR Tab
     private JLabel firstNameLabel, lastNameLabel,searchFirstNameLabel,searchLastNameLabel,
@@ -94,9 +99,6 @@ public class MainGUI extends JFrame
         //Build loginPanel
         buildLoginPanel();  
         
-        //Create Tabbed Interface
-        JTabbedPane tabPane = new JTabbedPane();
-
         //Configure the tabs
         tabPane.addTab("HR", null, employeePanel, "Human Resource");
         tabPane.addTab("Inventory", null, inventoryPanel, "Inventory");
@@ -135,8 +137,9 @@ public class MainGUI extends JFrame
 
         //Add Search Panel to JFrame
         searchPanel.setLayout(new BorderLayout());
-        searchPanel.add(searchPanelTop, BorderLayout.NORTH);
-        searchPanel.add(searchPanelBottom, BorderLayout.CENTER);
+        searchPanel.add(innerSearchPanel, BorderLayout.NORTH);
+        searchPanel.add(searchPanelTop, BorderLayout.CENTER);
+        searchPanel.add(searchPanelBottom, BorderLayout.SOUTH);
         searchPanel.add(searchButtonPanel, BorderLayout.SOUTH);
 
         //ButtonGroup + radio buttons
@@ -161,13 +164,16 @@ public class MainGUI extends JFrame
         loginPanelTop = new JPanel();
         loginPanelTop.setLayout(new GridLayout(4, 2));
         
+        //Create a title for the panel
+        loginPanelTop.setBorder(BorderFactory.createTitledBorder("Select Status of User"));
+        
         //JLabels for username and password
-        JLabel lblUserName = new JLabel("Username:");
-        JLabel lblPassword = new JLabel("Password:");
+        JLabel usernameLabel = new JLabel("Username:");
+        JLabel passwordLabel = new JLabel("Password:");
         
         //JTextField and JPasswordField for username and password
-        JTextField txtUserName = new JTextField(10);
-        JPasswordField txtPassword = new JPasswordField(10);
+        JTextField usernameText = new JTextField(10);
+        JPasswordField passwordText = new JPasswordField(10);
         
         //JRadioButtons for selecting user as regular of admin
         regularUserButton = new JRadioButton("Regular");
@@ -179,18 +185,18 @@ public class MainGUI extends JFrame
         adminUserButton.addItemListener(userSelection);
        
         //Set the username and password variables equal to what was entered
-        username = txtUserName.getText();
-        password = Arrays.toString(txtPassword.getPassword());
+        username = usernameText.getText();
+        password = Arrays.toString(passwordText.getPassword());
         
         //Add labels, textboxes and JRadioButtons to the panel
         loginPanelTop.add(regularUserButton);
         loginPanelTop.add(adminUserButton);
         
-        loginPanelTop.add(lblUserName);
-        loginPanelTop.add(txtUserName);
+        loginPanelTop.add(usernameLabel);
+        loginPanelTop.add(usernameText);
         
-        loginPanelTop.add(lblPassword);
-        loginPanelTop.add(txtPassword);
+        loginPanelTop.add(passwordLabel);
+        loginPanelTop.add(passwordText);
         
         //Create the loginPanelBottom and set the layout
         loginPanelBottom = new JPanel();
@@ -211,8 +217,14 @@ public class MainGUI extends JFrame
         loginFrame.add(loginPanelBottom, BorderLayout.SOUTH);
         
         //Pack the frame and setVisible to true
-        loginFrame.pack();
+        loginFrame.setSize(300, 200);
         loginFrame.setVisible(true);
+    }
+    
+    //Build Admin Panel
+    private void buildAdminPanel()
+    {
+        
     }
     
     //Build Employee Panel
@@ -433,11 +445,15 @@ public class MainGUI extends JFrame
             if (employeeType.getSelectedIndex() == 3)
             {
                 employeeType.setSelectedIndex(3);
+                
                 employeePayPanel.remove(hourlyRateLabel);
                 employeePayPanel.remove(hourlyRateText);
+                
                 employeePayPanel.revalidate();
+                
                 employeePayPanel.add(baseSalaryLabel);
                 employeePayPanel.add(baseSalaryText);
+                
                 employeePayPanel.add(commissionRateLabel);
                 employeePayPanel.add(commissionRateText); 
             }
@@ -483,7 +499,7 @@ public class MainGUI extends JFrame
         
         //Create mainPanelBottom and set layout
         inventoryPanelBottom = new JPanel();
-        inventoryPanelBottom.setLayout(new GridLayout(4, 1));
+        inventoryPanelBottom.setLayout(new GridLayout(4, 2));
         
         //Create the labels for the manufacturer
         manufacturerNameLabel = new JLabel("Manufacturer Name");
@@ -517,9 +533,10 @@ public class MainGUI extends JFrame
     
     private void buildSearchPanel()
     {
-        //Create searchPanelTop & set layout
-        searchPanelTop = new JPanel();
-
+        //Create and set layout for innerSearchPanel
+        innerSearchPanel = new JPanel();
+        innerSearchPanel.setLayout(new FlowLayout());
+        
         //Create JRadioButtons
         employeeButton = new JRadioButton("Employee", false);
         productButton = new JRadioButton("Product", false);
@@ -528,20 +545,17 @@ public class MainGUI extends JFrame
         RadioButtonHandler rbHandler = new RadioButtonHandler();
         employeeButton.addItemListener(rbHandler);
         productButton.addItemListener(rbHandler);
-         
-        //Set layout for searchPanelTop
-        searchPanelTop.setLayout(new FlowLayout());
         
         //Create a titled border for search selection and add search buttons
-        searchPanelTop.setBorder(BorderFactory.createTitledBorder("Search Selection"));
-        searchPanelTop.add(employeeButton);
-        searchPanelTop.add(productButton);
+        innerSearchPanel.setBorder(BorderFactory.createTitledBorder("Search Selection"));
+        innerSearchPanel.add(employeeButton);
+        innerSearchPanel.add(productButton);
         
-        //Create searchPanelBottom and set layout
-        searchPanelBottom = new JPanel();
-        searchPanelBottom.setLayout((new GridLayout(5,1)));
-        
-        //Create two sets of labels for searchPanelBottom based on selection
+        //Create searchPanelTop & set layout
+        searchPanelTop = new JPanel();
+        searchPanelTop.setLayout(new GridLayout(2,2));
+
+        //Create two sets of labels for searchPanelTop based on selection
         
         //Employee Selection Labels
         searchFirstNameLabel = new JLabel("First Name");
@@ -551,7 +565,7 @@ public class MainGUI extends JFrame
         searchProductNameLabel = new JLabel("Product Name");
         searchProductNumberLabel = new JLabel("Product Number");
         
-        //Create two sets of textboxes for searchPanelBottom based on selection
+        //Create two sets of textboxes for searchPanelTop based on selection
         
         //Employee Selection Textboxes
         searchFirstNameText = new JTextField(15);
@@ -560,6 +574,10 @@ public class MainGUI extends JFrame
         //Product Selection Textboxes
         searchProductNameText = new JTextField(15);
         searchProductNumberText = new JTextField(10);
+        
+        //Create searchPanelBottom and set layout
+        searchPanelBottom = new JPanel();
+        searchPanelBottom.setLayout((new GridLayout(6,3)));
         
     } // end of buildSearchPanel()
     
@@ -627,23 +645,23 @@ public class MainGUI extends JFrame
                 //Titled border
                 TitledBorder title;
                 title = BorderFactory.createTitledBorder("Employee Information");
-                searchPanelBottom.setBorder(title);
+                searchPanelTop.setBorder(title);
                 title.setTitleJustification(TitledBorder.CENTER);
                 
                 //Remove Product Labels and textboxes if there
-                searchPanelBottom.remove(searchProductNameLabel);
-                searchPanelBottom.remove(searchProductNameText);
-                searchPanelBottom.remove(searchProductNumberLabel);
-                searchPanelBottom.remove(searchProductNumberText);
+                searchPanelTop.remove(searchProductNameLabel);
+                searchPanelTop.remove(searchProductNameText);
+                searchPanelTop.remove(searchProductNumberLabel);
+                searchPanelTop.remove(searchProductNumberText);
                 
                 //Reload Panel
-                searchPanelBottom.revalidate();
+                searchPanelTop.revalidate();
 
                 //Add Employee Labels and textboxes
-                searchPanelBottom.add(searchFirstNameLabel);
-                searchPanelBottom.add(searchFirstNameText);
-                searchPanelBottom.add(searchLastNameLabel);
-                searchPanelBottom.add(searchLastNameText);
+                searchPanelTop.add(searchFirstNameLabel);
+                searchPanelTop.add(searchFirstNameText);
+                searchPanelTop.add(searchLastNameLabel);
+                searchPanelTop.add(searchLastNameText);
  
             }
             else if(productButton.isSelected() == true)
@@ -651,23 +669,23 @@ public class MainGUI extends JFrame
                 //Titled borders
                 TitledBorder title;
                 title = BorderFactory.createTitledBorder("Product Information");
-                searchPanelBottom.setBorder(title);
+                searchPanelTop.setBorder(title);
                 title.setTitleJustification(TitledBorder.CENTER);
                 
                 //Remove Employee Labels and textboxes if there
-                searchPanelBottom.remove(searchFirstNameLabel);
-                searchPanelBottom.remove(searchFirstNameText);
-                searchPanelBottom.remove(searchLastNameLabel);
-                searchPanelBottom.remove(searchLastNameText);
+                searchPanelTop.remove(searchFirstNameLabel);
+                searchPanelTop.remove(searchFirstNameText);
+                searchPanelTop.remove(searchLastNameLabel);
+                searchPanelTop.remove(searchLastNameText);
                 
                 //Reload Panel
-                searchPanelBottom.revalidate();
+                searchPanelTop.revalidate();
                 
                 //Add Product Labels and textboxes
-                searchPanelBottom.add(searchProductNameLabel);
-                searchPanelBottom.add(searchProductNameText);
-                searchPanelBottom.add(searchProductNumberLabel);
-                searchPanelBottom.add(searchProductNumberText);
+                searchPanelTop.add(searchProductNameLabel);
+                searchPanelTop.add(searchProductNameText);
+                searchPanelTop.add(searchProductNumberLabel);
+                searchPanelTop.add(searchProductNumberText);
             } 
         }
     } 
@@ -685,13 +703,20 @@ public class MainGUI extends JFrame
             user = new User(username, password);
             user.setAdmin(isAdmin);
             
-            JOptionPane.showMessageDialog(null, user.printUserStatus(), "Status", WIDTH);
-            
             //Hide the login page
             loginFrame.setVisible(false);
             
             //Set the main form to visible
             setVisible(true);
+            
+            if (user.userIsAdmin() == true) 
+            {
+                //Add the tab to edit/delete
+                tabPane.addTab("Edit/Delete", null, adminPanel, "Admin");
+            
+                //build the adminPanel
+                buildAdminPanel();
+            }
             
         }
     }
@@ -706,6 +731,23 @@ public class MainGUI extends JFrame
                       "Search", WIDTH);
             
             //Add functionality later to retrieve the record and display result
+            
+            if (employeeButton.isSelected() == true)
+            {
+                //Try to load in a record from the db
+                try
+                {
+                    //Retrieve record from db
+                    
+                    //load record into a table in the searchPanelBottom
+                    
+                }
+                //if record is not found catch the exception
+                catch(Exception error)
+                {
+                    
+                }
+            }
         }
     }
     
