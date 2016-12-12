@@ -1,6 +1,5 @@
 package hr;
 
-import notUsed.ServiceClass;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
@@ -45,8 +44,6 @@ public abstract class Employee {
         this.dateOfBirth.set(Calendar.YEAR, year);
         this.dateOfBirth.set(Calendar.MONTH, month-1);
         this.dateOfBirth.set(Calendar.DATE, day);
-        
-        idNumber = ServiceClass.getEmployeeId();
         
         employeeCount++;
         

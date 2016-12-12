@@ -13,7 +13,6 @@ import hr.User;
 import java.util.Arrays;
 
 
-
 /**
  *
  * @author Sam Rizzo
