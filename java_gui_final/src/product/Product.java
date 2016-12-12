@@ -16,6 +16,11 @@ public class Product {
     private int productNumber;
     private double productCost;
     
+    public Product()
+    {
+        //Empty constructor
+    }
+    
     public Product(String productDescription, String productName, 
             int productNumber, double productCost, 
             Manufacturer productManufacturer) {

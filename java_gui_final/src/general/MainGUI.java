@@ -1,10 +1,7 @@
 package general;
 
-import static com.sun.org.apache.xalan.internal.xsltc.compiler.util.Util.replace;
-import static com.sun.xml.internal.bind.WhiteSpaceProcessor.replace;
 import hr.BasePlusCommissionEmployee;
 import hr.CommissionSalesEmployee;
-import hr.Employee;
 import hr.HourlyEmployee;
 import hr.SalaryEmployee;
 import javax.swing.*;
@@ -12,7 +9,8 @@ import java.awt.*;
 import java.awt.event.*;
 import static java.awt.image.ImageObserver.WIDTH;
 import javax.swing.border.TitledBorder;
-import static jdk.nashorn.internal.objects.NativeString.replace;
+import hr.User;
+import java.util.Arrays;
 
 
 
@@ -22,10 +20,13 @@ import static jdk.nashorn.internal.objects.NativeString.replace;
  */
 public class MainGUI extends JFrame
 {
+    //JFrame for login page
+    JFrame loginFrame = new JFrame();
+    
     //JPanels
-    JPanel welcomePanel, employeePanel = new JPanel(),mainEmployeePanel, 
-            employeePanelTop, innerEmployeePanel, employeeDOBPanel, 
-            employeePanelBottom, employeePayPanel, 
+    JPanel  loginPanelTop, loginPanelBottom, welcomePanel, 
+            employeePanel = new JPanel(),mainEmployeePanel, employeePanelTop, 
+            innerEmployeePanel, employeeDOBPanel, employeePanelBottom, employeePayPanel, 
             inventoryPanel = new JPanel(), inventoryPanelTop, inventoryPanelBottom,
             searchPanel = new JPanel(), searchPanelTop, searchPanelBottom, 
             salesPanel = new JPanel(), salesPanelTop, salesPanelBototm,
@@ -58,12 +59,15 @@ public class MainGUI extends JFrame
             manufacturerPhoneText, manufacturerIDText;
     
     //ButtonGroup + JRadio Buttons
-    private final ButtonGroup searchBox;
+    private final ButtonGroup searchBox = new ButtonGroup();
     private JButton exitButton, submitButton, createButton, 
             searchButton;
     
+    //ButtonGroup for userStatus selection
+    private final ButtonGroup userStatusBox = new ButtonGroup();
+    
     //JRadioButtons to track search selection
-    JRadioButton employeeButton, productButton;
+    JRadioButton employeeButton, productButton, regularUserButton, adminUserButton;
     
     //JComboBox to hold Employee Types
     private JComboBox<String> employeeType;
@@ -71,17 +75,29 @@ public class MainGUI extends JFrame
             {"Hourly","Salary","Commission", "Base + Commission"};
     
     //boolean
-    boolean keepGoing = true;
+    private boolean keepGoing = true;
+    
+    //boolean for determining if the user is an Admin
+    boolean isAdmin;
+    
+    //User Object
+    User user;
+    
+    //User information
+    private static String username, password;
    
     public MainGUI()
     {
         //Create App title and layout
         super("Helix Administration");
         setLayout(new BorderLayout());
+
+        //Build loginPanel
+        buildLoginPanel();  
         
         //Create Tabbed Interface
         JTabbedPane tabPane = new JTabbedPane();
-        
+
         //Configure the tabs
         tabPane.addTab("HR", null, employeePanel, "Human Resource");
         tabPane.addTab("Inventory", null, inventoryPanel, "Inventory");
@@ -91,12 +107,12 @@ public class MainGUI extends JFrame
         
         //Build Panels
         buildMainPanel();
-        
+
         //Tab Panels
         buildEmployeePanel();
         buildInventoryPanel();
         buildSearchPanel();
-        
+
         //Button Panels
         buildEmployeeButtonPanel();
         buildInventoryButtonPanel();
@@ -107,32 +123,97 @@ public class MainGUI extends JFrame
         employeePanel.add(mainEmployeePanel, BorderLayout.NORTH);
         employeePanel.add(employeePanelBottom, BorderLayout.CENTER);
         employeePanel.add(employeeButtonPanel, BorderLayout.SOUTH);
-        
+
         //Add welcomePanel and tabbedPanel to JFrame
         add(welcomePanel, BorderLayout.NORTH);
         add(tabPane, BorderLayout.CENTER);
-        
+
         //Add Inventory Panel to JFrame
         inventoryPanel.setLayout(new BorderLayout());
         inventoryPanel.add(inventoryPanelTop, BorderLayout.NORTH);
         inventoryPanel.add(inventoryPanelBottom, BorderLayout.CENTER);
         inventoryPanel.add(inventoryButtonPanel, BorderLayout.SOUTH);
-        
+
         //Add Search Panel to JFrame
         searchPanel.setLayout(new BorderLayout());
         searchPanel.add(searchPanelTop, BorderLayout.NORTH);
         searchPanel.add(searchPanelBottom, BorderLayout.CENTER);
         searchPanel.add(searchButtonPanel, BorderLayout.SOUTH);
-        
+
         //ButtonGroup + radio buttons
-        searchBox = new ButtonGroup();
         searchBox.add(employeeButton);
         searchBox.add(productButton);
         
+        userStatusBox.add(regularUserButton);
+        userStatusBox.add(adminUserButton);
+
         // JComboBox for type of employees
         employeeType = new JComboBox(typeOfEmployee);
         employeeType.setMaximumRowCount(3);
+    }
 
+    private void buildLoginPanel()
+    {
+        // Set the title and layout of the loginFrame
+        loginFrame.setTitle("Login");
+        loginFrame.setLayout(new BorderLayout());
+       
+        //Create the loginPanel and set the layout
+        loginPanelTop = new JPanel();
+        loginPanelTop.setLayout(new GridLayout(4, 2));
+        
+        //JLabels for username and password
+        JLabel lblUserName = new JLabel("Username:");
+        JLabel lblPassword = new JLabel("Password:");
+        
+        //JTextField and JPasswordField for username and password
+        JTextField txtUserName = new JTextField(10);
+        JPasswordField txtPassword = new JPasswordField(10);
+        
+        //JRadioButtons for selecting user as regular of admin
+        regularUserButton = new JRadioButton("Regular");
+        adminUserButton = new JRadioButton("Admin");
+        
+        //Add ItemListener to the JRadioButtons
+        UserSelectButtonHandler userSelection = new UserSelectButtonHandler();
+        regularUserButton.addItemListener(userSelection);
+        adminUserButton.addItemListener(userSelection);
+       
+        //Set the username and password variables equal to what was entered
+        username = txtUserName.getText();
+        password = Arrays.toString(txtPassword.getPassword());
+        
+        //Add labels, textboxes and JRadioButtons to the panel
+        loginPanelTop.add(regularUserButton);
+        loginPanelTop.add(adminUserButton);
+        
+        loginPanelTop.add(lblUserName);
+        loginPanelTop.add(txtUserName);
+        
+        loginPanelTop.add(lblPassword);
+        loginPanelTop.add(txtPassword);
+        
+        //Create the loginPanelBottom and set the layout
+        loginPanelBottom = new JPanel();
+        loginPanelBottom.setLayout(new FlowLayout());
+        
+        //JButton for creating a user
+        JButton create = new JButton("Create User");
+        
+        //Add ActionListener to the JButton
+        UserButtonListener userListener = new UserButtonListener();
+        create.addActionListener(userListener);
+        
+        //Add the create user button to the loginPanelBottom
+        loginPanelBottom.add(create);
+        
+        //Add loginPanelTop and loginPanelBottom to the frame
+        loginFrame.add(loginPanelTop, BorderLayout.NORTH);
+        loginFrame.add(loginPanelBottom, BorderLayout.SOUTH);
+        
+        //Pack the frame and setVisible to true
+        loginFrame.pack();
+        loginFrame.setVisible(true);
     }
     
     //Build Employee Panel
@@ -300,8 +381,7 @@ public class MainGUI extends JFrame
         {
             public void actionPerformed(ActionEvent e) 
             {
-              
-                
+             
                //if hourly
             if (employeeType.getSelectedIndex() == 0)
             {
@@ -536,19 +616,6 @@ public class MainGUI extends JFrame
         searchButtonPanel.add(exitButton);
     }
     
-    //private inner class for event handling
-    private class SearchButtonListener implements ActionListener
-    {
-        @Override
-        public void actionPerformed(ActionEvent event)
-        {
-            JOptionPane.showMessageDialog(null, "Searching the database...", 
-                      "Search", WIDTH);
-            
-            //Add functionality later to retrieve the record and display result
-        }
-    }
-    
     private class RadioButtonHandler implements ItemListener
     {
         @Override
@@ -604,9 +671,62 @@ public class MainGUI extends JFrame
                 searchPanelBottom.add(searchProductNumberText);
             } 
         }
+    } 
+    
+    //private inner class for event handling
+    private class UserButtonListener implements ActionListener
+    {
+        @Override
+        public void actionPerformed(ActionEvent event)
+        {
+            JOptionPane.showMessageDialog(null, "Creating user", 
+                    "Welcome", WIDTH);
+            
+            //Create the new user
+            user = new User(username, password);
+            user.setAdmin(isAdmin);
+            
+            JOptionPane.showMessageDialog(null, user.printUserStatus(), "Status", WIDTH);
+            
+            //Hide the login page
+            loginFrame.setVisible(false);
+            
+            //Set the main form to visible
+            setVisible(true);
+            
+        }
     }
     
+    //private inner class for event handling
+    private class SearchButtonListener implements ActionListener
+    {
+        @Override
+        public void actionPerformed(ActionEvent event)
+        {
+            JOptionPane.showMessageDialog(null, "Searching the database...", 
+                      "Search", WIDTH);
+            
+            //Add functionality later to retrieve the record and display result
+        }
+    }
     
+    private class UserSelectButtonHandler implements ItemListener
+    {
+        @Override
+        public void itemStateChanged(ItemEvent event)
+        {
+            
+            // code for changing labels and textboxes based on search selection
+            if(regularUserButton.isSelected() == true)
+            {
+                isAdmin = false;
+            }
+            else if(adminUserButton.isSelected() == true)
+            {
+                isAdmin = true;
+            } 
+        }
+    } 
     
     //private inner class for event handling
     private class ExitButtonListener implements ActionListener
@@ -768,15 +888,10 @@ public class MainGUI extends JFrame
                   
                   clearTextBoxes();
                   
-                }
-                
-            }
-                  
+                }  
+            }           
         }
     }
-    
-   
- 
     
     public void employeeAfterCreatedMessage()
     {
@@ -920,13 +1035,13 @@ public class MainGUI extends JFrame
             }
     }
     
+    
     //main
     public static void main(String[] args)
-    {
+    {   
         MainGUI gui = new MainGUI();
         gui.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         gui.pack();
-        gui.setVisible(true);
-    }
-             
+        gui.setVisible(false);
+    }            
 }
