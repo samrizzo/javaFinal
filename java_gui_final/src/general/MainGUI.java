@@ -11,6 +11,8 @@ import static java.awt.image.ImageObserver.WIDTH;
 import javax.swing.border.TitledBorder;
 import hr.User;
 import java.util.Arrays;
+import manufacturer.Manufacturer;
+import product.Product;
 
 
 
@@ -38,13 +40,13 @@ public class MainGUI extends JFrame
     private JTabbedPane tabPane = new JTabbedPane();
     
     //JLabels for loginPanel
-    private JLabel usernameLabel, passwordLabel;
+    private JLabel loginUsernameLabel, loginPasswordLabel;
     
     //JTextField for loginPanel
-    private JTextField usernameText;
+    private JTextField loginUsernameText;
     
     //JPasswordField for loginPanel
-    private JPasswordField passwordText;
+    private JPasswordField loginPasswordText;
    
     //JLabels for HR Tab
     private JLabel firstNameLabel, lastNameLabel,searchFirstNameLabel,searchLastNameLabel,
@@ -89,6 +91,12 @@ public class MainGUI extends JFrame
     
     //boolean
     private boolean keepGoing = true;
+    
+    //gets the typeOfEmployee.getSelectedIndex() and gives the int the number
+    private int employeeIndex=10;
+    
+    // first response
+    private int response,response2;
     
     //boolean for determining if the user is an Admin
     boolean isAdmin;
@@ -177,12 +185,12 @@ public class MainGUI extends JFrame
         loginPanelTop.setBorder(BorderFactory.createTitledBorder("Select Status of User"));
         
         //JLabels for username and password
-        usernameLabel = new JLabel("Username:");
-        passwordLabel = new JLabel("Password:");
+        loginUsernameLabel = new JLabel("Username:");
+        loginPasswordLabel = new JLabel("Password:");
         
         //JTextField and JPasswordField for username and password
-        usernameText = new JTextField(10);
-        passwordText = new JPasswordField(10);
+        loginUsernameText = new JTextField(10);
+        loginPasswordText = new JPasswordField(10);
         
         //JRadioButtons for selecting user as regular of admin
         regularUserButton = new JRadioButton("Regular");
@@ -197,18 +205,18 @@ public class MainGUI extends JFrame
         regularUserButton.setSelected(true);
        
         //Set the username and password variables equal to what was entered
-        username = usernameText.getText();
-        password = Arrays.toString(passwordText.getPassword());
+        username = loginUsernameText.getText();
+        password = Arrays.toString(loginPasswordText.getPassword());
         
         //Add labels, textboxes and JRadioButtons to the panel
         loginPanelTop.add(regularUserButton);
         loginPanelTop.add(adminUserButton);
         
-        loginPanelTop.add(usernameLabel);
-        loginPanelTop.add(usernameText);
+        loginPanelTop.add(loginUsernameLabel);
+        loginPanelTop.add(loginUsernameText);
         
-        loginPanelTop.add(passwordLabel);
-        loginPanelTop.add(passwordText);
+        loginPanelTop.add(loginPasswordLabel);
+        loginPanelTop.add(loginPasswordText);
         
         //Create the loginPanelBottom and set the layout
         loginPanelBottom = new JPanel();
@@ -222,8 +230,8 @@ public class MainGUI extends JFrame
         
         //Add itemStateChanged to the JButton
         ButtonEnabledListener buttonListener = new ButtonEnabledListener();
-        usernameText.addActionListener(buttonListener);
-        passwordText.addActionListener(buttonListener);
+        loginUsernameText.addActionListener(buttonListener);
+        loginPasswordText.addActionListener(buttonListener);
         
         //Add ActionListener to the JButton
         UserButtonListener userListener = new UserButtonListener();
@@ -716,7 +724,7 @@ public class MainGUI extends JFrame
         @Override
         public void actionPerformed(ActionEvent event)
         {
-            if(usernameText.getText().length() > 0)
+            if(loginUsernameText.getText().length() > 0)
                 
             {
                 createUserButton.setEnabled(true);
@@ -734,7 +742,7 @@ public class MainGUI extends JFrame
         @Override
         public void actionPerformed(ActionEvent event)
         {
-            if(usernameText.getText().length() == 0 || passwordText.getPassword().length == 0) 
+            if(loginUsernameText.getText().length() == 0 || loginPasswordText.getPassword().length == 0) 
             {
                 JOptionPane.showMessageDialog(null, "Username and Password cannot be blank.\n"
                         + "Please press the Enter key after typing your username & password.",
@@ -743,7 +751,7 @@ public class MainGUI extends JFrame
                 createUserButton.setEnabled(false);
             }
             
-            else if(usernameText.getText().length() > 0 && passwordText.getPassword().length > 0) 
+            else if(loginUsernameText.getText().length() > 0 && loginPasswordText.getPassword().length > 0) 
             {
                 JOptionPane.showMessageDialog(null, "Creating user", 
                     "Welcome",  WIDTH);
@@ -839,22 +847,89 @@ public class MainGUI extends JFrame
     //private inner class for event handling
     private class SubmitButtonListener implements ActionListener
     {
-        @Override
+  @Override
         public void actionPerformed(ActionEvent event)
         {
-            //Check if user is ready to submit employee details
-            int response = JOptionPane.showConfirmDialog(null, 
-                    "Are you sure you want to submit this form", 
-                    "Create", JOptionPane.YES_NO_OPTION);
             
-            if (response == JOptionPane.YES_OPTION) 
+            keepGoing = true;
+            checkProductInformation();//checks for input errors
+            checkManufactureInformation();//checks for input errors
+            if(keepGoing == true)
             {
-              JOptionPane.showMessageDialog(null, "Form Submitted", 
-                      "Confirmation", WIDTH);
-              
+                //Check if user is ready to submit employee details
+                int response = JOptionPane.showConfirmDialog(null, 
+                        "Are you sure you want to submit this form", 
+                        "Create", JOptionPane.YES_NO_OPTION);
+
+                if (response == JOptionPane.YES_OPTION) 
+                {
+                  JOptionPane.showMessageDialog(null, "Form Submitted", 
+                          "Confirmation", WIDTH);
+                  //creates manufacture
+                  Manufacturer test = new Manufacturer(manufacturerNameText.getText(),manufacturerAddressText.getText(),manufacturerPhoneText.getText(),Integer.parseInt(manufacturerIDText.getText())); 
+                  //creates product
+                  Product product = new Product(productDescriptionText.getText(),productNameText.getText(),Integer.parseInt(productNumberText.getText()),Double.parseDouble(productCostText.getText()),test);
+
+                  //add to database
+                  System.out.println(test);
+                  System.out.println(product);
+                  
+                }  
             }
-           
         }
+    }
+    
+    public void checkEmptyString(String example)
+    {
+        if(example.replaceAll("\\s","").isEmpty())
+        {
+            keepGoing = false;
+            System.out.println("All fields required");
+        }
+    }
+    
+    public void checkProductInformation()
+    {   
+        checkEmptyString(productNameText.getText());
+        checkEmptyString(productDescriptionText.getText());
+        checkEmptyString(productCostText.getText());
+        checkEmptyString(productNumberText.getText());
+        
+        try
+            {
+             checkDouble(Double.parseDouble(productCostText.getText()));               
+            }
+            catch(Exception e)
+            {
+               checkDouble("Product Cost",productCostText.getText());         
+            }
+        
+        try
+            {
+             checkInt(Integer.parseInt(productNumberText.getText()));             
+            }
+            catch(Exception e)
+            {
+               checkInt("Product Number",productNumberText.getText());         
+            }
+    }
+    
+ 
+    public void checkManufactureInformation()
+    {
+        checkEmptyString(manufacturerNameText.getText());
+        checkEmptyString(manufacturerAddressText.getText());
+        checkEmptyString(manufacturerPhoneText.getText());
+        checkEmptyString(manufacturerIDText.getText());
+        
+        try
+            {
+             checkInt(Integer.parseInt(manufacturerIDText.getText()));             
+            }
+            catch(Exception e)
+            {
+               checkInt("Manufacture ID",manufacturerIDText.getText());         
+            }
     }
     
     //private inner class for event handling
@@ -864,132 +939,189 @@ public class MainGUI extends JFrame
         @Override
         public void actionPerformed(ActionEvent event)
         {
-            
-            //**************************************************************
+            //reset boolean
             keepGoing = true; 
-            
-            
-            if(employeeType.getSelectedIndex() == 0)
+            //checks what type of employee, and the requirements for that type of employee            
+            if(employeeIndex==0)
             {
-            // if hourly employee is selected
             checkHourlyEmployeeInformation();
             }
-            if(employeeType.getSelectedIndex() == 1)
+            if(employeeIndex==1)
             {
             checkSalaryEmployeeInformation();   
             }
-            if(employeeType.getSelectedIndex() == 2)
+            if(employeeIndex == 2)
             {
             checkCommissionEmployeeInformation();
             }
-            if(employeeType.getSelectedIndex() == 3)
+            if(employeeIndex == 3)
             {
             checkSalaryPlusCommissionEmployeeInformation();  
             }
-             
-            //***************************************************************  
-            
-            //joptionpane int
-            int response;
-            
-            // If all variables have been validated and aren't empty, create employee
+            //if all required fields are there, continue    
             if(keepGoing == true)
             {
-                
-                if(employeeType.getSelectedIndex() == 0)
+                if(employeeIndex == 0)//hourly employee
                 {
-                    response = JOptionPane.showConfirmDialog(null, 
-                    "Are you sure you want to create a hourly employee?", 
-                    "Create", JOptionPane.YES_NO_OPTION);
+                    createOptionPane();
                     
-                    employeeAfterCreatedMessage();
-                    
-                  HourlyEmployee test = new HourlyEmployee(firstNameText.getText(),lastNameText.getText(),
-                          genderText.getText(),addressText.getText(),phoneNumberText.getText(),
-                          Integer.parseInt(sinText.getText()),Integer.parseInt(yearText.getText()),Integer.parseInt(monthText.getText()),
-                          Integer.parseInt(dayText.getText()),positionText.getText(),statusText.getText(),departmentText.getText(),
-                          Integer.parseInt(idNumberText.getText()),Double.parseDouble(hourlyRateText.getText()));
-                  
-                  System.out.println(test);
-                  System.out.println(test.getHourlyRate());
-                  clearTextBoxes();
+                    if(response == JOptionPane.YES_OPTION)
+                    {
+                        employeeAfterCreatedMessage();
+                        
+                        //creates a HourlyEmployee
+                        HourlyEmployee test = new HourlyEmployee(firstNameText.getText(),lastNameText.getText(),
+                                genderText.getText(),addressText.getText(),phoneNumberText.getText(),
+                                Integer.parseInt(sinText.getText()),Integer.parseInt(yearText.getText()),Integer.parseInt(monthText.getText()),
+                                Integer.parseInt(dayText.getText()),positionText.getText(),statusText.getText(),departmentText.getText(),
+                                Integer.parseInt(idNumberText.getText()),Double.parseDouble(hourlyRateText.getText()));
+                        
+                        //put in db
+                        
+                        //clears textfields
+                        clearTextBoxes();
+                    }
+                    else
+                    {
+                        clearOptionPane();
+                        if(response2 == JOptionPane.YES_OPTION)
+                        {
+                            clearTextBoxes();
+                        }
+                        else
+                        {
+                            //nothing
+                        }
+                    }
                 }
                 
-                if(employeeType.getSelectedIndex() == 1)
+                if(employeeIndex == 1)//salary employee
                 {
-                    response = JOptionPane.showConfirmDialog(null, 
-                    "Are you sure you want to create a salary employee?", 
-                    "Create", JOptionPane.YES_NO_OPTION);
+                    createOptionPane();
+                    if(response == JOptionPane.YES_OPTION)
+                    {
+                        employeeAfterCreatedMessage();
                     
-                    employeeAfterCreatedMessage();
-                    
-                  SalaryEmployee test = new SalaryEmployee(firstNameText.getText(),lastNameText.getText(),
-                          genderText.getText(),addressText.getText(),phoneNumberText.getText(),
-                          Integer.parseInt(sinText.getText()),Integer.parseInt(yearText.getText()),Integer.parseInt(monthText.getText()),
-                          Integer.parseInt(dayText.getText()),positionText.getText(),statusText.getText(),departmentText.getText(),
-                          Integer.parseInt(idNumberText.getText()),Double.parseDouble(baseSalaryText.getText()));
+                        SalaryEmployee test = new SalaryEmployee(firstNameText.getText(),lastNameText.getText(),
+                                genderText.getText(),addressText.getText(),phoneNumberText.getText(),
+                                Integer.parseInt(sinText.getText()),Integer.parseInt(yearText.getText()),Integer.parseInt(monthText.getText()),
+                                Integer.parseInt(dayText.getText()),positionText.getText(),statusText.getText(),departmentText.getText(),
+                                Integer.parseInt(idNumberText.getText()),Double.parseDouble(baseSalaryText.getText()));
                   
-                  System.out.println(test);
-                  System.out.println(test.getSalary());
-                  
-                  clearTextBoxes();
+                        clearTextBoxes();
+                    }
+                    else
+                    {
+                        clearOptionPane();
+                        if(response2 == JOptionPane.YES_OPTION)
+                        {
+                            clearTextBoxes();
+                        }
+                        
+                        
+                    }
                 }
-                 if(employeeType.getSelectedIndex() == 2)
+                
+                 if(employeeIndex == 2)//commission employee
                 {
-                    response = JOptionPane.showConfirmDialog(null, 
-                    "Are you sure you want to create a commission employee?", 
-                    "Create", JOptionPane.YES_NO_OPTION);
+                    createOptionPane();
+                    if(response == JOptionPane.YES_OPTION)
+                    {
+                        employeeAfterCreatedMessage();
                     
-                    employeeAfterCreatedMessage();
-                    
-                  CommissionSalesEmployee test = new CommissionSalesEmployee(firstNameText.getText(),lastNameText.getText(),
-                          genderText.getText(),addressText.getText(),phoneNumberText.getText(),
-                          Integer.parseInt(sinText.getText()),Integer.parseInt(yearText.getText()),Integer.parseInt(monthText.getText()),
-                          Integer.parseInt(dayText.getText()),positionText.getText(),statusText.getText(),departmentText.getText(),
-                          Integer.parseInt(idNumberText.getText()),Double.parseDouble(commissionRateText.getText()));
-                  
-                  
-                  System.out.println(test);
-                  System.out.println(test.getCommissionRate());
-                  
-                  
-                  clearTextBoxes();
-
+                        CommissionSalesEmployee test = new CommissionSalesEmployee(firstNameText.getText(),lastNameText.getText(),
+                                genderText.getText(),addressText.getText(),phoneNumberText.getText(),
+                                Integer.parseInt(sinText.getText()),Integer.parseInt(yearText.getText()),Integer.parseInt(monthText.getText()),
+                                Integer.parseInt(dayText.getText()),positionText.getText(),statusText.getText(),departmentText.getText(),
+                                Integer.parseInt(idNumberText.getText()),Double.parseDouble(commissionRateText.getText()));
+                                    
+                        clearTextBoxes();
+                    }
+                     else
+                    {
+                       clearOptionPane();
+                        if(response2 == JOptionPane.YES_OPTION)
+                        {
+                            clearTextBoxes();
+                        }
+                        else
+                        {
+                            //nothing
+                        }
+                    }
                 }
-                if(employeeType.getSelectedIndex() == 3)
+                 
+                if(employeeIndex == 3)//commission plus salary employee
                 {
-                    response = JOptionPane.showConfirmDialog(null, 
-                    "Are you sure you want to create a salary + commission employee?", 
-                    "Create", JOptionPane.YES_NO_OPTION);
+                    createOptionPane();
+                    if(response == JOptionPane.YES_OPTION)
+                    {
+                        employeeAfterCreatedMessage();
                     
-                    employeeAfterCreatedMessage();
-                    
-                  BasePlusCommissionEmployee test = new BasePlusCommissionEmployee(firstNameText.getText(),lastNameText.getText(),
-                          genderText.getText(),addressText.getText(),phoneNumberText.getText(),
-                          Integer.parseInt(sinText.getText()),Integer.parseInt(yearText.getText()),Integer.parseInt(monthText.getText()),
-                          Integer.parseInt(dayText.getText()),positionText.getText(),statusText.getText(),departmentText.getText(),
-                          Integer.parseInt(idNumberText.getText()),Double.parseDouble(commissionRateText.getText()),Double.parseDouble(baseSalaryText.getText()));
+                        BasePlusCommissionEmployee test = new BasePlusCommissionEmployee(firstNameText.getText(),lastNameText.getText(),
+                                genderText.getText(),addressText.getText(),phoneNumberText.getText(),
+                                Integer.parseInt(sinText.getText()),Integer.parseInt(yearText.getText()),Integer.parseInt(monthText.getText()),
+                                Integer.parseInt(dayText.getText()),positionText.getText(),statusText.getText(),departmentText.getText(),
+                                Integer.parseInt(idNumberText.getText()),Double.parseDouble(commissionRateText.getText()),Double.parseDouble(baseSalaryText.getText()));
                   
-                  
-                  System.out.println(test);
-                  System.out.println(test.getBaseSalary());
-                  System.out.println(test.getCommissionRate());
-                  
-                  
-                  clearTextBoxes();
-                  
+                        clearTextBoxes();
+                    }
+                     else
+                    {
+                        clearOptionPane();
+                        if(response2 == JOptionPane.YES_OPTION)
+                        {
+                            clearTextBoxes();
+                        }
+                        else
+                        {
+                            //nothing
+                        }
+                    }
                 }  
             }           
         }
     }
     
-    public void employeeAfterCreatedMessage()
+    // asks user if they want to clear 
+    public void clearOptionPane()
     {
-       
+        int response = JOptionPane.showConfirmDialog(null, 
+                    "Do you want to clear the textfields?", 
+                    "Clear", JOptionPane.YES_NO_OPTION);
+    }
+    
+    // ask user if they want to create employee
+    public void createOptionPane()
+    {
+        String employee="";
+        
+        if(employeeIndex == 0)
+        {
+            employee="hourly";
+        }
+        if(employeeIndex == 1)
+        {
+            employee="salary";
+        }
+        if(employeeIndex == 2)
+        {
+            employee="commission";
+        }
+        if(employeeIndex == 3)
+        {
+            employee="salary and commission";
+        }
+        response = JOptionPane.showConfirmDialog(null, 
+                    "Are you sure you want to create a "+employee+" employee?", 
+                    "Create", JOptionPane.YES_NO_OPTION);
+    }
+    
+    // tells user that employee was created
+    public void employeeAfterCreatedMessage()
+    {   
               JOptionPane.showMessageDialog(null, "Employee Created", 
-                      "Confirmation", WIDTH);
-              
-              //Create employee and store in db **        
+                      "Confirmation", WIDTH);     
     }
     
     private void clearTextBoxes()
@@ -1025,6 +1157,14 @@ public class MainGUI extends JFrame
         {
             keepGoing = false;
         }
+          try
+            {
+                checkDouble(Double.parseDouble(commissionRateText.getText()));               
+            }
+            catch(Exception e)
+            {
+               checkDouble("Commission Rate",commissionRateText.getText());         
+            }
     }
     
     private void checkSalaryEmployeeInformation()
@@ -1035,6 +1175,14 @@ public class MainGUI extends JFrame
         {
             keepGoing = false;
         }
+          try
+            {
+                checkDouble(Double.parseDouble(baseSalaryText.getText()));               
+            }
+            catch(Exception e)
+            {
+               checkDouble("Salary",baseSalaryText.getText());         
+            }
     }
     
     private void checkSalaryPlusCommissionEmployeeInformation()
@@ -1049,7 +1197,27 @@ public class MainGUI extends JFrame
         {
             keepGoing = false;
         }
+        
+        try
+            {
+                checkDouble(Double.parseDouble(baseSalaryText.getText()));               
+            }
+            catch(Exception e)
+            {
+               checkDouble("Salary",baseSalaryText.getText());         
+            }
+        
+        try
+            {
+                checkDouble(Double.parseDouble(commissionRateText.getText()));               
+            }
+            catch(Exception e)
+            {
+               checkDouble("Commission Rate",commissionRateText.getText());         
+            }
     }
+    
+    
     
     private void checkHourlyEmployeeInformation()
     {
@@ -1059,26 +1227,36 @@ public class MainGUI extends JFrame
         {
             keepGoing = false;
         }
+            try
+            {
+                checkDouble(Double.parseDouble(hourlyRateText.getText()));               
+            }
+            catch(Exception e)
+            {
+               checkDouble("Hourly Rate",hourlyRateText.getText());         
+            }
     }
+    
+    
+    
     // checks to see if employee position information isn't empty when white space removed
     private void checkEmployeePositionInformation()
     {
-        if(positionText.getText().replaceAll("\\s","").isEmpty())
+      
+        checkEmptyString(positionText.getText());
+        checkEmptyString(statusText.getText());
+        checkEmptyString(departmentText.getText());
+        checkEmptyString(idNumberText.getText());
+        
+            try
             {
-                keepGoing = false;
+                checkInt(Integer.parseInt(idNumberText.getText()));               
             }
-        if(statusText.getText().replaceAll("\\s","").isEmpty())
+            catch(Exception e)
             {
-                keepGoing = false;
+               checkInt("ID Number",idNumberText.getText());         
             }
-        if(departmentText.getText().replaceAll("\\s","").isEmpty())
-            {
-                keepGoing = false;
-            }
-        if(idNumberText.getText().replaceAll("\\s","").isEmpty())
-            {
-                keepGoing = false;
-            }     
+        
     }
     
     /*
@@ -1087,44 +1265,77 @@ public class MainGUI extends JFrame
     */
     private void checkEmployeeInformation()
     {
-            if(firstNameText.getText().replaceAll("\\s","").isEmpty())
+            
+        checkEmptyString(firstNameText.getText());  
+        checkEmptyString(lastNameText.getText());
+        checkEmptyString(genderText.getText());
+        checkEmptyString(addressText.getText());
+        checkEmptyString(phoneNumberText.getText());
+        checkEmptyString(sinText.getText());
+        checkEmptyString(yearText.getText());
+        checkEmptyString(monthText.getText());
+        checkEmptyString(dayText.getText());
+        
+            //try to parse text into int, catch exception
+            try
             {
-                keepGoing = false;
+                checkInt(Integer.parseInt(sinText.getText()));               
             }
-            if(lastNameText.getText().replaceAll("\\s","").isEmpty())
+            catch(Exception e)
             {
-                keepGoing = false;
+               checkInt("sin",sinText.getText());         
             }
-            if(genderText.getText().replaceAll("\\s","").isEmpty())
+            
+            try
             {
-                keepGoing = false;
+                checkInt(Integer.parseInt(dayText.getText()));               
             }
-            if(addressText.getText().replaceAll("\\s","").isEmpty())
+            catch(Exception e)
             {
-                keepGoing = false;
+               checkInt("day",dayText.getText());         
             }
-            if(phoneNumberText.getText().replaceAll("\\s","").isEmpty())
+             
+            try
             {
-                keepGoing = false;
+                checkInt(Integer.parseInt(monthText.getText()));               
             }
-            if(sinText.getText().replaceAll("\\s","").isEmpty())
+            catch(Exception e)
             {
-                keepGoing = false;
+               checkInt("month",monthText.getText());         
             }
-            if(yearText.getText().replaceAll("\\s","").isEmpty())
+              
+            try
             {
-                keepGoing = false;
+               checkInt(Integer.parseInt(yearText.getText()));               
             }
-            if(monthText.getText().replaceAll("\\s","").isEmpty())
+            catch(Exception e)
             {
-                keepGoing = false;
-            }
-            if(dayText.getText().replaceAll("\\s","").isEmpty())
-            {
-                keepGoing = false;
-            }
+               checkInt("year",yearText.getText());         
+            }        
     }
     
+    //empty method
+    public void checkInt(int example)
+    {
+        //Success
+    }
+    //if user puts a String, they will be told to enter a int
+    public void checkInt(String textbox,String example)
+    {
+        keepGoing = false;
+        System.out.println("Please only enter a numberic value for "+textbox+" You entered "+example);
+    }
+    //empty method
+    public void checkDouble(double example)
+    {
+        //Success
+    }
+    //if user enters a string, they will be told to enter a double
+    public void checkDouble(String textbox,String example)
+    {
+        keepGoing = false;
+        System.out.println("Please only enter a numberic value for "+textbox+" You entered "+example);
+    }
     
     //main
     public static void main(String[] args)
