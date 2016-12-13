@@ -1,5 +1,6 @@
 package sales;
 
+import hr.Employee;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.GregorianCalendar;
@@ -12,7 +13,9 @@ import product.Product;
 public class Order 
 {
     //HAS-A reference to a product
-    Product product = new Product();
+    private Product product = new Product();
+    
+    private Employee employee;
     
     private int orderNumber;
     private double subTotal, total;
@@ -29,10 +32,11 @@ public class Order
         // Empty Constructor
     }
     
-    public Order(int orderNumber, Product product)
+    public Order(int orderNumber, Employee employee, Product product)
     {
         this.orderNumber = orderNumber;
         this.product = product;
+        this.employee = employee;
         
         orderDate = new GregorianCalendar();
         
@@ -47,9 +51,20 @@ public class Order
         this.orderNumber = orderNumber;
     }
     
+    public void setEmployee(Employee employee)
+    {
+        this.employee = employee;
+    }
+    
     public void setProductOrder(Product product)
     {
         this.product = product;
+    }
+    
+    //Return the ID of the employee
+    public int getEmployeeID()
+    {
+        return employee.getIDNumber();
     }
     
     /**

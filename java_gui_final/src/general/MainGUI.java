@@ -34,7 +34,7 @@ public class MainGUI extends JFrame
             salesPanel = new JPanel(), salesPanelTop, salesPanelBototm,
             customerPanel = new JPanel(), customerPanelTop, customerPanelBottom, 
             employeeButtonPanel, inventoryButtonPanel, searchButtonPanel,
-            adminPanel;
+            adminPanel = new JPanel(), adminPanelTop, adminPanelBottom;
     
     //Create Tabbed Interface
     private JTabbedPane tabPane = new JTabbedPane();
@@ -47,6 +47,12 @@ public class MainGUI extends JFrame
     
     //JPasswordField for loginPanel
     private JPasswordField loginPasswordText;
+    
+    //JTextField db username for db form
+    private JTextField dbUsername;
+    
+    //JPasswordField db password for db form
+    private JPasswordField dbPassword;
    
     //JLabels for HR Tab
     private JLabel firstNameLabel, lastNameLabel,searchFirstNameLabel,searchLastNameLabel,
@@ -83,6 +89,11 @@ public class MainGUI extends JFrame
     
     //JRadioButtons to track search selection
     JRadioButton employeeButton, productButton, regularUserButton, adminUserButton;
+    
+    //ButtonGroup and JRadioButtons for buildAdminPanel
+    private final ButtonGroup adminButtonGroup = new ButtonGroup();
+    JRadioButton adminEmployeeButton, adminProductButton, adminSalesButton, 
+            adminManufacturerButton;
     
     //JComboBox to hold Employee Types
     private JComboBox<String> employeeType;
@@ -159,12 +170,18 @@ public class MainGUI extends JFrame
         searchPanel.add(searchPanelBottom, BorderLayout.SOUTH);
         searchPanel.add(searchButtonPanel, BorderLayout.SOUTH);
 
-        //ButtonGroup + radio buttons
+        //ButtonGroup + radio buttons for user selection
         searchBox.add(employeeButton);
         searchBox.add(productButton);
         
         userStatusBox.add(regularUserButton);
         userStatusBox.add(adminUserButton);
+        
+        //ButtonGroup & JRadioButtons for adminPanel
+        adminButtonGroup.add(adminEmployeeButton);
+        adminButtonGroup.add(adminProductButton);
+        adminButtonGroup.add(adminSalesButton);
+        adminButtonGroup.add(adminManufacturerButton);
 
         // JComboBox for type of employees
         employeeType = new JComboBox(typeOfEmployee);
@@ -222,6 +239,10 @@ public class MainGUI extends JFrame
         loginPanelBottom = new JPanel();
         loginPanelBottom.setLayout(new FlowLayout());
         
+        //Set info title
+        loginPanelBottom.setBorder(BorderFactory.createTitledBorder
+        ("Press enter after you add the username & password to enable button"));
+        
         //JButton for creating a user
         createUserButton = new JButton("Create User");
         
@@ -245,14 +266,30 @@ public class MainGUI extends JFrame
         loginFrame.add(loginPanelBottom, BorderLayout.SOUTH);
         
         //Pack the frame and setVisible to true
-        loginFrame.setSize(300, 200);
+        loginFrame.setSize(440, 250);
         loginFrame.setVisible(true);
     }
     
     //Build Admin Panel
     private void buildAdminPanel()
     {
+        //Create the adminPanelTop and set layout
+        adminPanelTop = new JPanel();
+        adminPanelTop.setLayout(new GridLayout(1, 4));
         
+        //Create the JRadioButtons
+        adminEmployeeButton = new JRadioButton("Employee");
+        adminProductButton = new JRadioButton("Product");
+        adminSalesButton = new JRadioButton("Sales");
+        adminManufacturerButton = new JRadioButton("Manufacturer");
+        
+        //Add JRadioButtons to the adminPanelTop
+        adminPanelTop.add(adminEmployeeButton);
+        adminPanelTop.add(adminProductButton);
+        adminPanelTop.add(adminSalesButton);
+        adminPanelTop.add(adminManufacturerButton);
+        
+        adminPanel.add(adminPanelTop);
     }
     
     //Build Employee Panel
