@@ -21,10 +21,10 @@ import java.util.Arrays;
 public class MainGUI extends JFrame
 {
     //JFrame for login page
-    JFrame loginFrame = new JFrame();
+    private JFrame loginFrame = new JFrame();
     
     //JPanels
-    JPanel  loginPanelTop, loginPanelBottom, welcomePanel, 
+    private JPanel  loginPanelTop, loginPanelBottom, welcomePanel, 
             employeePanel = new JPanel(),mainEmployeePanel, employeePanelTop, 
             innerEmployeePanel, employeeDOBPanel, employeePanelBottom, employeePayPanel, 
             inventoryPanel = new JPanel(), inventoryPanelTop, inventoryPanelBottom,
@@ -35,8 +35,17 @@ public class MainGUI extends JFrame
             adminPanel;
     
     //Create Tabbed Interface
-    JTabbedPane tabPane = new JTabbedPane();
+    private JTabbedPane tabPane = new JTabbedPane();
     
+    //JLabels for loginPanel
+    private JLabel usernameLabel, passwordLabel;
+    
+    //JTextField for loginPanel
+    private JTextField usernameText;
+    
+    //JPasswordField for loginPanel
+    private JPasswordField passwordText;
+   
     //JLabels for HR Tab
     private JLabel firstNameLabel, lastNameLabel,searchFirstNameLabel,searchLastNameLabel,
             searchProductNameLabel, searchProductNumberLabel,
@@ -65,7 +74,7 @@ public class MainGUI extends JFrame
     //ButtonGroup + JRadio Buttons
     private final ButtonGroup searchBox = new ButtonGroup();
     private JButton exitButton, submitButton, createButton, 
-            searchButton;
+            searchButton, createUserButton;
     
     //ButtonGroup for userStatus selection
     private final ButtonGroup userStatusBox = new ButtonGroup();
@@ -168,12 +177,12 @@ public class MainGUI extends JFrame
         loginPanelTop.setBorder(BorderFactory.createTitledBorder("Select Status of User"));
         
         //JLabels for username and password
-        JLabel usernameLabel = new JLabel("Username:");
-        JLabel passwordLabel = new JLabel("Password:");
+        usernameLabel = new JLabel("Username:");
+        passwordLabel = new JLabel("Password:");
         
         //JTextField and JPasswordField for username and password
-        JTextField usernameText = new JTextField(10);
-        JPasswordField passwordText = new JPasswordField(10);
+        usernameText = new JTextField(10);
+        passwordText = new JPasswordField(10);
         
         //JRadioButtons for selecting user as regular of admin
         regularUserButton = new JRadioButton("Regular");
@@ -183,6 +192,9 @@ public class MainGUI extends JFrame
         UserSelectButtonHandler userSelection = new UserSelectButtonHandler();
         regularUserButton.addItemListener(userSelection);
         adminUserButton.addItemListener(userSelection);
+        
+        //On load set regular user as selected
+        regularUserButton.setSelected(true);
        
         //Set the username and password variables equal to what was entered
         username = usernameText.getText();
@@ -203,14 +215,22 @@ public class MainGUI extends JFrame
         loginPanelBottom.setLayout(new FlowLayout());
         
         //JButton for creating a user
-        JButton create = new JButton("Create User");
+        createUserButton = new JButton("Create User");
+        
+        //Set disabled on load
+        createUserButton.setEnabled(false);
+        
+        //Add itemStateChanged to the JButton
+        ButtonEnabledListener buttonListener = new ButtonEnabledListener();
+        usernameText.addActionListener(buttonListener);
+        passwordText.addActionListener(buttonListener);
         
         //Add ActionListener to the JButton
         UserButtonListener userListener = new UserButtonListener();
-        create.addActionListener(userListener);
+        createUserButton.addActionListener(userListener);
         
         //Add the create user button to the loginPanelBottom
-        loginPanelBottom.add(create);
+        loginPanelBottom.add(createUserButton);
         
         //Add loginPanelTop and loginPanelBottom to the frame
         loginFrame.add(loginPanelTop, BorderLayout.NORTH);
@@ -691,33 +711,62 @@ public class MainGUI extends JFrame
     } 
     
     //private inner class for event handling
+    private class ButtonEnabledListener implements ActionListener
+    {
+        @Override
+        public void actionPerformed(ActionEvent event)
+        {
+            if(usernameText.getText().length() > 0)
+                
+            {
+                createUserButton.setEnabled(true);
+            }
+            else
+            {
+                createUserButton.setEnabled(false);
+            }
+        }
+    }
+    
+    //private inner class for event handling
     private class UserButtonListener implements ActionListener
     {
         @Override
         public void actionPerformed(ActionEvent event)
         {
-            JOptionPane.showMessageDialog(null, "Creating user", 
-                    "Welcome", WIDTH);
-            
-            //Create the new user
-            user = new User(username, password);
-            user.setAdmin(isAdmin);
-            
-            //Hide the login page
-            loginFrame.setVisible(false);
-            
-            //Set the main form to visible
-            setVisible(true);
-            
-            if (user.userIsAdmin() == true) 
+            if(usernameText.getText().length() == 0 || passwordText.getPassword().length == 0) 
             {
-                //Add the tab to edit/delete
-                tabPane.addTab("Edit/Delete", null, adminPanel, "Admin");
-            
-                //build the adminPanel
-                buildAdminPanel();
+                JOptionPane.showMessageDialog(null, "Username and Password cannot be blank.\n"
+                        + "Please press the Enter key after typing your username & password.",
+                        "Error", WIDTH);
+                
+                createUserButton.setEnabled(false);
             }
             
+            else if(usernameText.getText().length() > 0 && passwordText.getPassword().length > 0) 
+            {
+                JOptionPane.showMessageDialog(null, "Creating user", 
+                    "Welcome",  WIDTH);
+
+                //Create the new user
+                user = new User(username, password);
+                user.setAdmin(isAdmin);
+
+                //Hide the login page
+                loginFrame.setVisible(false);
+
+                //Set the main form to visible
+                setVisible(true);
+
+                if (user.userIsAdmin() == true) 
+                {
+                    //Add the tab to edit/delete
+                    tabPane.addTab("Edit/Delete", null, adminPanel, "Admin");
+
+                    //build the adminPanel
+                    buildAdminPanel();
+                }
+            }
         }
     }
     
