@@ -29,6 +29,8 @@ public class NewMain {
         Order o = new Order(356, s, prod);
         
         System.out.println(o.getEmployeeID());
+        
+        System.out.println(s.getDateOfBirth());
     }
     
 }

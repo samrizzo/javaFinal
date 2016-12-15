@@ -23,6 +23,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Arrays;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.Vector;
 import javax.swing.table.DefaultTableModel;
 import manufacturer.Manufacturer;
@@ -47,9 +48,9 @@ public class MainGUI extends JFrame
     
     //BufferedWriter for writing to a file
     private BufferedWriter bufferWriter = null;
-    
-    //DateFormat and Calendar for error handling
-    private final Calendar date = Calendar.getInstance();
+
+    //Date reference for sending DOB to db
+    Date date;
     
     //JPanels
     private JPanel  loginPanelTop, loginPanelBottom, welcomePanel, 
@@ -1771,7 +1772,7 @@ public class MainGUI extends JFrame
         searchAddressText.setText(searchEmp.getAddress());
         searchPhoneNumberText.setText(searchEmp.getAddress());
         searchSinNumberText.setText(Integer.toString(searchEmp.getSIN()));
-        searchDateOfBirthText.setText(searchEmp.getDateOfBirth());
+        searchDateOfBirthText.setText(searchEmp.getDateOfBirth().toString());
         searchPositionText.setText(searchEmp.getPosition());
         searchStatusText.setText(searchEmp.getEmployeeStatus());
         searchDepartmentText.setText(searchEmp.getDepartment());

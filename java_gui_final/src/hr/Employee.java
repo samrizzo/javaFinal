@@ -1,6 +1,7 @@
 package hr;
 
-import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.time.Month;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
@@ -13,14 +14,11 @@ public abstract class Employee {
     
     // Create a today instance to get current year 
     private final Calendar today = Calendar.getInstance();
-    
-    private Date date;
-    private String birthDate = "";
 
     private String firstName, lastName, status, gender, address, 
             phoneNumber, position, department;   
     
-    private GregorianCalendar dateOfBirth;
+    private LocalDate dateOfBirth;
     private Date dateOfHire;
     private int idNumber, sin;
     
@@ -44,11 +42,7 @@ public abstract class Employee {
         this.dateOfHire = new GregorianCalendar().getTime();  
         
         //Set the date of birth
-        this.dateOfBirth = new GregorianCalendar();
-        this.dateOfBirth.set(Calendar.YEAR, year);
-        this.dateOfBirth.set(Calendar.MONTH, month-1);
-        this.dateOfBirth.set(Calendar.DATE, day);
-        this.date = dateOfBirth.getTime();
+        this.dateOfBirth = LocalDate.of(year, month, day);
         
         employeeCount++;
         
@@ -104,17 +98,9 @@ public abstract class Employee {
         this.department = department;
     }
     
-    public void setDateOfBirth(String birth)
-    {
-        this.birthDate = birth;
-    }
-    
     public void setDateOfBirth(int year, int month, int day){
         
-        this.dateOfBirth = new GregorianCalendar();
-        this.dateOfBirth.set(Calendar.YEAR, year);
-        this.dateOfBirth.set(Calendar.MONTH,month-1);
-        this.dateOfBirth.set(Calendar.DATE,day);
+        this.dateOfBirth = LocalDate.of(year, month, day);
 
     }
 
@@ -182,19 +168,9 @@ public abstract class Employee {
         return this.status;
     }
     
-    public String getDateOfBirth(){
-        
-        try {
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy/mm/dd");
-        birthDate = sdf.format(date);
-        date = sdf.parse(birthDate);
-        }
-        catch(Exception e)
-        {
-            
-        }
-        
-        return birthDate;
+    public LocalDate getDateOfBirth()
+    {
+        return this.dateOfBirth;
     }
     
     /**
@@ -202,7 +178,7 @@ public abstract class Employee {
      * @return 
      */
     public int getAge() {       
-        int age = today.get(Calendar.YEAR) - this.dateOfBirth.get(Calendar.YEAR);
+        int age = today.get(Calendar.YEAR) - this.dateOfBirth.getYear();
         return age;
     }
     
