@@ -2,6 +2,7 @@ package general;
 
 import hr.BasePlusCommissionEmployee;
 import hr.CommissionSalesEmployee;
+import hr.Employee;
 import hr.HourlyEmployee;
 import hr.SalaryEmployee;
 import javax.swing.*;
@@ -10,10 +11,22 @@ import java.awt.event.*;
 import static java.awt.image.ImageObserver.WIDTH;
 import javax.swing.border.TitledBorder;
 import hr.User;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.Arrays;
+import java.util.Calendar;
+import java.util.Vector;
+import javax.swing.table.DefaultTableModel;
 import manufacturer.Manufacturer;
 import product.Product;
-
 
 
 /**
@@ -22,22 +35,35 @@ import product.Product;
  */
 public class MainGUI extends JFrame
 {
+    //Employee and Product Search Objects
+    private Employee searchEmp;
+    private Product searchProd;
+    
+    //Dimension for search JTable 
+    private final Dimension tableSize = new Dimension(800, 200);
+    
     //JFrame for login page
-    private JFrame loginFrame = new JFrame();
+    private final JFrame loginFrame = new JFrame();
+    
+    //BufferedWriter for writing to a file
+    private BufferedWriter bufferWriter = null;
+    
+    //DateFormat and Calendar for error handling
+    private final Calendar date = Calendar.getInstance();
     
     //JPanels
     private JPanel  loginPanelTop, loginPanelBottom, welcomePanel, 
             employeePanel = new JPanel(),mainEmployeePanel, employeePanelTop, 
             innerEmployeePanel, employeeDOBPanel, employeePanelBottom, employeePayPanel, 
             inventoryPanel = new JPanel(), inventoryPanelTop, inventoryPanelBottom,
-            searchPanel = new JPanel(), innerSearchPanel, searchPanelTop, searchPanelBottom, 
-            salesPanel = new JPanel(), salesPanelTop, salesPanelBototm,
+            searchPanel = new JPanel(), innerSearchPanel, searchPanelTop, searchPanelNorth, searchPanelBottom, 
+            salesPanel = new JPanel(), salesPanelTop, salesPanelBottom,
             customerPanel = new JPanel(), customerPanelTop, customerPanelBottom, 
             employeeButtonPanel, inventoryButtonPanel, searchButtonPanel,
-            adminPanel = new JPanel(), adminPanelTop, adminPanelBottom;
+            adminPanel = new JPanel(),adminSelectPanel, adminPanelTop, adminPanelBottom;
     
     //Create Tabbed Interface
-    private JTabbedPane tabPane = new JTabbedPane();
+    private final JTabbedPane tabPane = new JTabbedPane();
     
     //JLabels for loginPanel
     private JLabel loginUsernameLabel, loginPasswordLabel;
@@ -47,19 +73,11 @@ public class MainGUI extends JFrame
     
     //JPasswordField for loginPanel
     private JPasswordField loginPasswordText;
-    
-    //JTextField db username for db form
-    private JTextField dbUsername;
-    
-    //JPasswordField db password for db form
-    private JPasswordField dbPassword;
    
     //JLabels for HR Tab
-    private JLabel firstNameLabel, lastNameLabel,searchFirstNameLabel,searchLastNameLabel,
-            searchProductNameLabel, searchProductNumberLabel,
-            genderLabel, addressLabel, phoneNumberLabel, sinLabel, yearLabel, 
-            monthLabel, dayLabel,positionLabel, statusLabel, departmentLabel, 
-            idNumberLabel, hourlyRateLabel, commissionRateLabel, baseSalaryLabel,
+    private JLabel firstNameLabel, lastNameLabel,genderLabel, addressLabel, 
+            phoneNumberLabel, sinLabel, yearLabel, monthLabel, dayLabel,positionLabel, 
+            statusLabel, departmentLabel, idNumberLabel, hourlyRateLabel, commissionRateLabel, baseSalaryLabel,
             welcomeLabel;
     
     //JTextFields for HR & Search Tabs
@@ -68,6 +86,25 @@ public class MainGUI extends JFrame
             genderText, addressText, phoneNumberText, sinText, yearText, monthText, 
             dayText, positionText, statusText, departmentText, idNumberText, 
             hourlyRateText, commissionRateText, baseSalaryText;
+    
+    //JLabels and TextFields for Search Tab
+    private JLabel searchFirstNameLabel,searchLastNameLabel, resultFirstNameLabel, 
+            resultLastNameLabel, searchGenderLabel, searchAddressLabel, searchPhoneNumberLabel, 
+            searchSinNumberLabel, searchDateOfBirthLabel, searchPositionLabel, searchStatusLabel, 
+            searchDepartmentLabel, searchIDNumberLabel, searchProductNameLabel, resultProductNameLabel,
+            resultProductNumberLabel,searchProductDescriptionLabel, searchProductCostLabel, 
+            searchProductNumberLabel;
+    
+    //JTable for searchData
+    private JTable table = new JTable(0,0);
+    
+    //JScrollPane for JTable
+    private JScrollPane scrollPane = new JScrollPane();
+    
+    private JTextField resultFirstNameText, resultLastNameText, searchGenderText, searchAddressText, 
+            searchPhoneNumberText, searchSinNumberText, searchDateOfBirthText, searchPositionText, 
+            searchStatusText, searchDepartmentText, searchIDNumberText, resultProductNameText, 
+            searchProductDescriptionText, searchProductCostText, resultProductNumberText;
     
     //JLabels for Inventory Tab
     private JLabel productNameLabel, productDescriptionLabel, productCostLabel, 
@@ -97,7 +134,7 @@ public class MainGUI extends JFrame
     
     //JComboBox to hold Employee Types
     private JComboBox<String> employeeType;
-    private static final String[] typeOfEmployee = 
+    private final String[] typeOfEmployee = 
             {"Hourly","Salary","Commission", "Base + Commission"};
     
     //boolean
@@ -115,8 +152,24 @@ public class MainGUI extends JFrame
     //User Object
     User user;
     
-    //User information
-    private static String username, password;
+    //User information for creating a user object
+    private String username, password;
+    
+    //username and password for db connection
+    //private String dbUsername = "gc200271677";
+    //private String dbPassword = "Y-xX3iij";
+    private String dbUsername = "gc200298516";
+    private String dbPassword = "E-6!t7Xe";
+    
+    //Setup db query and connection
+    //private final String dbURL = "jdbc:mysql://sql.computerstudi.es:3306/gc200271677";
+    private final String dbURL = "jdbc:mysql://sql.computerstudi.es:3306/gc200298516";
+    private final String query = "SELECT * FROM employees";
+        
+    //Create Connection objects
+    private Statement statement = null;
+    private ResultSet result = null;
+    private Connection conn = null;
    
     public MainGUI()
     {
@@ -141,6 +194,8 @@ public class MainGUI extends JFrame
         buildEmployeePanel();
         buildInventoryPanel();
         buildSearchPanel();
+        buildSalesPanel();
+        //buildCustomerPanel();
 
         //Button Panels
         buildEmployeeButtonPanel();
@@ -165,9 +220,8 @@ public class MainGUI extends JFrame
 
         //Add Search Panel to JFrame
         searchPanel.setLayout(new BorderLayout());
-        searchPanel.add(innerSearchPanel, BorderLayout.NORTH);
-        searchPanel.add(searchPanelTop, BorderLayout.CENTER);
-        searchPanel.add(searchPanelBottom, BorderLayout.SOUTH);
+        searchPanel.add(searchPanelNorth, BorderLayout.NORTH);
+        searchPanel.add(searchPanelBottom, BorderLayout.CENTER);
         searchPanel.add(searchButtonPanel, BorderLayout.SOUTH);
 
         //ButtonGroup + radio buttons for user selection
@@ -182,6 +236,11 @@ public class MainGUI extends JFrame
         adminButtonGroup.add(adminProductButton);
         adminButtonGroup.add(adminSalesButton);
         adminButtonGroup.add(adminManufacturerButton);
+        
+        //Add panels to Sales Panel
+        salesPanel.setLayout(new BorderLayout());
+        salesPanel.add(salesPanelTop, BorderLayout.NORTH);
+        salesPanel.add(salesPanelBottom, BorderLayout.SOUTH);
 
         // JComboBox for type of employees
         employeeType = new JComboBox(typeOfEmployee);
@@ -273,9 +332,16 @@ public class MainGUI extends JFrame
     //Build Admin Panel
     private void buildAdminPanel()
     {
-        //Create the adminPanelTop and set layout
-        adminPanelTop = new JPanel();
-        adminPanelTop.setLayout(new GridLayout(1, 4));
+        //Set the layout of the adminPanel
+        adminPanel.setLayout(new BorderLayout());
+        
+        //Create the adminSelectPanel and set layout
+        adminSelectPanel = new JPanel();
+        adminSelectPanel.setLayout(new GridLayout(1, 4));
+        
+        //Add a title to the selectPanel
+        adminSelectPanel.setBorder(BorderFactory.createTitledBorder
+        ("Please select the object you want to edit/delete"));
         
         //Create the JRadioButtons
         adminEmployeeButton = new JRadioButton("Employee");
@@ -283,13 +349,42 @@ public class MainGUI extends JFrame
         adminSalesButton = new JRadioButton("Sales");
         adminManufacturerButton = new JRadioButton("Manufacturer");
         
-        //Add JRadioButtons to the adminPanelTop
-        adminPanelTop.add(adminEmployeeButton);
-        adminPanelTop.add(adminProductButton);
-        adminPanelTop.add(adminSalesButton);
-        adminPanelTop.add(adminManufacturerButton);
+        //Create the ItemListener for the JRadioButtons
+        AdminButtonHandler adminListener = new AdminButtonHandler();
         
-        adminPanel.add(adminPanelTop);
+        //Add ActionListener to all JRadioButtons for adminPanel
+        adminEmployeeButton.addItemListener(adminListener);
+        adminProductButton.addItemListener(adminListener);
+        adminSalesButton.addItemListener(adminListener);
+        adminManufacturerButton.addItemListener(adminListener);
+        
+        //Add JRadioButtons to the adminPanelTop
+        adminSelectPanel.add(adminEmployeeButton);
+        adminSelectPanel.add(adminProductButton);
+        adminSelectPanel.add(adminSalesButton);
+        adminSelectPanel.add(adminManufacturerButton);
+        
+        adminPanel.add(adminSelectPanel, BorderLayout.NORTH);
+    }
+    
+    //Build Sales Panel
+    private void buildSalesPanel()
+    {
+        //Create salesPanelTop and set layout
+        salesPanelTop = new JPanel();
+        salesPanelTop.setLayout(new GridLayout(4,4));
+        
+        //Create salesPanelBottom and set Layout
+        salesPanelBottom = new JPanel();
+        salesPanelBottom.setLayout(new FlowLayout());
+
+    }
+
+    //Build Customer Panel
+    private void buildCustomerPanel()
+    {
+        customerPanelTop = new JPanel();
+        customerPanelTop.setLayout(new BorderLayout());
     }
     
     //Build Employee Panel
@@ -297,7 +392,7 @@ public class MainGUI extends JFrame
     {
         //Create Panel and Greeting
         welcomePanel = new JPanel();
-        welcomeLabel = new JLabel("Welcome to Helix");
+        welcomeLabel = new JLabel(" Welcome to Helix");
         
         //Set font of the label
         welcomeLabel.setFont(new Font("Arial", Font.BOLD, 14));
@@ -443,8 +538,7 @@ public class MainGUI extends JFrame
         //Create the labels
         hourlyRateLabel = new JLabel("Hourly Rate");
         baseSalaryLabel = new JLabel("Salary");
-        commissionRateLabel = new JLabel("Commission Rate");
-        
+        commissionRateLabel = new JLabel("Commission Rate");     
         
         //Create the textboxes
         hourlyRateText = new JTextField();
@@ -457,11 +551,12 @@ public class MainGUI extends JFrame
         {
             public void actionPerformed(ActionEvent e) 
             {
-             
+             System.out.println("T1"+employeeType.getSelectedIndex());
                //if hourly
             if (employeeType.getSelectedIndex() == 0)
             {
-                employeeType.setSelectedIndex(0);
+                
+                employeeIndex=0;
                 
                 employeePayPanel.remove(commissionRateLabel);
                 employeePayPanel.remove(commissionRateText);
@@ -477,7 +572,8 @@ public class MainGUI extends JFrame
                 //if salary
             if (employeeType.getSelectedIndex() == 1)
             {
-                employeeType.setSelectedIndex(1);
+                
+                employeeIndex=1;
                 
                 employeePayPanel.remove(hourlyRateLabel);
                 employeePayPanel.remove(hourlyRateText);
@@ -493,7 +589,8 @@ public class MainGUI extends JFrame
                 //if commission
             if (employeeType.getSelectedIndex() == 2)
             {
-                employeeType.setSelectedIndex(2);
+                
+                employeeIndex=2;
                 
                 employeePayPanel.remove(hourlyRateLabel);
                 employeePayPanel.remove(hourlyRateText);
@@ -509,7 +606,8 @@ public class MainGUI extends JFrame
                 //if commission plus salary
             if (employeeType.getSelectedIndex() == 3)
             {
-                employeeType.setSelectedIndex(3);
+                
+                employeeIndex=3;
                 
                 employeePayPanel.remove(hourlyRateLabel);
                 employeePayPanel.remove(hourlyRateText);
@@ -522,7 +620,8 @@ public class MainGUI extends JFrame
                 employeePayPanel.add(commissionRateLabel);
                 employeePayPanel.add(commissionRateText); 
             }
-            
+                         System.out.println("T2"+employeeType.getSelectedIndex());
+
             }//end of action performed 
         });//end of action listen
     }//end of buildEmployeePanel
@@ -598,6 +697,10 @@ public class MainGUI extends JFrame
     
     private void buildSearchPanel()
     {
+        //Create and set layout for searchPanelNorth
+        searchPanelNorth = new JPanel();
+        searchPanelNorth.setLayout(new BorderLayout());
+        
         //Create and set layout for innerSearchPanel
         innerSearchPanel = new JPanel();
         innerSearchPanel.setLayout(new FlowLayout());
@@ -618,7 +721,7 @@ public class MainGUI extends JFrame
         
         //Create searchPanelTop & set layout
         searchPanelTop = new JPanel();
-        searchPanelTop.setLayout(new GridLayout(2,2));
+        searchPanelTop.setLayout(new FlowLayout());
 
         //Create two sets of labels for searchPanelTop based on selection
         
@@ -640,9 +743,22 @@ public class MainGUI extends JFrame
         searchProductNameText = new JTextField(15);
         searchProductNumberText = new JTextField(10);
         
+        //Add searchPanelTop and innerSearchPanel to searchPanelNorth
+        searchPanelNorth.add(innerSearchPanel, BorderLayout.NORTH);
+        searchPanelNorth.add(searchPanelTop, BorderLayout.SOUTH);
+        
         //Create searchPanelBottom and set layout
         searchPanelBottom = new JPanel();
-        searchPanelBottom.setLayout((new GridLayout(6,3)));
+        
+        //Set Titled border for searchPanelBottom
+        searchPanelBottom.setBorder(BorderFactory.createTitledBorder("Results"));
+        
+        //Create the JScrollPane and set dimensions
+        scrollPane = new JScrollPane(table);
+        scrollPane.setPreferredSize(tableSize);
+        
+        //Add scrollPane to the searchPanelBottom
+        searchPanelBottom.add(scrollPane);
         
     } // end of buildSearchPanel()
     
@@ -653,8 +769,11 @@ public class MainGUI extends JFrame
         createButton = new JButton("Create");
         exitButton = new JButton("Exit");
         
+        //CreateButtonListener
+        CreateButtonListener createListener = new CreateButtonListener();
+        
         //Add the specific action listener for each button
-        createButton.addActionListener(new CreateButtonListener()); 
+        createButton.addActionListener(createListener); 
         exitButton.addActionListener(new ExitButtonListener());
         
         //Add the JButtons to the buttonPanel
@@ -755,6 +874,33 @@ public class MainGUI extends JFrame
         }
     } 
     
+    private class AdminButtonHandler implements ItemListener
+    {
+        @Override
+        public void itemStateChanged(ItemEvent event)
+        {
+            if (adminEmployeeButton.isSelected() == true)
+            {
+                
+            }
+            
+            else if (adminProductButton.isSelected() == true)
+            {
+                
+            }
+            
+            else if (adminSalesButton.isSelected() == true)
+            {
+                
+            }
+            
+            else if (adminManufacturerButton.isSelected() == true)
+            {
+                
+            }
+        }
+    }
+    
     //private inner class for event handling
     private class ButtonEnabledListener implements ActionListener
     {
@@ -821,26 +967,9 @@ public class MainGUI extends JFrame
         @Override
         public void actionPerformed(ActionEvent event)
         {
-            JOptionPane.showMessageDialog(null, "Searching the database...", 
-                      "Search", WIDTH);
-            
-            //Add functionality later to retrieve the record and display result
-            
             if (employeeButton.isSelected() == true)
             {
-                //Try to load in a record from the db
-                try
-                {
-                    //Retrieve record from db
-                    
-                    //load record into a table in the searchPanelBottom
-                    
-                }
-                //if record is not found catch the exception
-                catch(Exception error)
-                {
-                    
-                }
+                searchEmployeeDB(searchFirstNameText.getText(), searchLastNameText.getText());
             }
         }
     }
@@ -938,7 +1067,8 @@ public class MainGUI extends JFrame
             }
             catch(Exception e)
             {
-               checkDouble("Product Cost",productCostText.getText());         
+               checkDouble("Product Cost",productCostText.getText());  
+               appendToFile(e);
             }
         
         try
@@ -947,7 +1077,8 @@ public class MainGUI extends JFrame
             }
             catch(Exception e)
             {
-               checkInt("Product Number",productNumberText.getText());         
+               checkInt("Product Number",productNumberText.getText());     
+               appendToFile(e);
             }
     }
     
@@ -965,7 +1096,8 @@ public class MainGUI extends JFrame
             }
             catch(Exception e)
             {
-               checkInt("Manufacture ID",manufacturerIDText.getText());         
+               checkInt("Manufacture ID",manufacturerIDText.getText());  
+               appendToFile(e);
             }
     }
     
@@ -1013,7 +1145,10 @@ public class MainGUI extends JFrame
                                 Integer.parseInt(dayText.getText()),positionText.getText(),statusText.getText(),departmentText.getText(),
                                 Integer.parseInt(idNumberText.getText()),Double.parseDouble(hourlyRateText.getText()));
                         
+                        JOptionPane.showMessageDialog(null, test.toString(), "Employee Created", WIDTH);
+                        
                         //put in db
+                        addEmployeeToDB(test);
                         
                         //clears textfields
                         clearTextBoxes();
@@ -1044,7 +1179,11 @@ public class MainGUI extends JFrame
                                 Integer.parseInt(sinText.getText()),Integer.parseInt(yearText.getText()),Integer.parseInt(monthText.getText()),
                                 Integer.parseInt(dayText.getText()),positionText.getText(),statusText.getText(),departmentText.getText(),
                                 Integer.parseInt(idNumberText.getText()),Double.parseDouble(baseSalaryText.getText()));
+                        
+                        JOptionPane.showMessageDialog(null, test.toString(), "Employee Created", WIDTH);
                   
+                        addEmployeeToDB(test);
+                        
                         clearTextBoxes();
                     }
                     else
@@ -1071,6 +1210,10 @@ public class MainGUI extends JFrame
                                 Integer.parseInt(sinText.getText()),Integer.parseInt(yearText.getText()),Integer.parseInt(monthText.getText()),
                                 Integer.parseInt(dayText.getText()),positionText.getText(),statusText.getText(),departmentText.getText(),
                                 Integer.parseInt(idNumberText.getText()),Double.parseDouble(commissionRateText.getText()));
+                        
+                        JOptionPane.showMessageDialog(null, test.toString(), "Employee Created", WIDTH);
+                        
+                        addEmployeeToDB(test);
                                     
                         clearTextBoxes();
                     }
@@ -1100,6 +1243,8 @@ public class MainGUI extends JFrame
                                 Integer.parseInt(sinText.getText()),Integer.parseInt(yearText.getText()),Integer.parseInt(monthText.getText()),
                                 Integer.parseInt(dayText.getText()),positionText.getText(),statusText.getText(),departmentText.getText(),
                                 Integer.parseInt(idNumberText.getText()),Double.parseDouble(commissionRateText.getText()),Double.parseDouble(baseSalaryText.getText()));
+                        
+                        addEmployeeToDB(test);
                   
                         clearTextBoxes();
                     }
@@ -1200,7 +1345,8 @@ public class MainGUI extends JFrame
             }
             catch(Exception e)
             {
-               checkDouble("Commission Rate",commissionRateText.getText());         
+               checkDouble("Commission Rate",commissionRateText.getText()); 
+               appendToFile(e);
             }
     }
     
@@ -1218,7 +1364,8 @@ public class MainGUI extends JFrame
             }
             catch(Exception e)
             {
-               checkDouble("Salary",baseSalaryText.getText());         
+               checkDouble("Salary",baseSalaryText.getText());    
+               appendToFile(e);
             }
     }
     
@@ -1241,7 +1388,8 @@ public class MainGUI extends JFrame
             }
             catch(Exception e)
             {
-               checkDouble("Salary",baseSalaryText.getText());         
+               checkDouble("Salary",baseSalaryText.getText()); 
+               appendToFile(e);
             }
         
         try
@@ -1250,7 +1398,8 @@ public class MainGUI extends JFrame
             }
             catch(Exception e)
             {
-               checkDouble("Commission Rate",commissionRateText.getText());         
+               checkDouble("Commission Rate",commissionRateText.getText()); 
+               appendToFile(e);
             }
     }
     
@@ -1270,7 +1419,8 @@ public class MainGUI extends JFrame
             }
             catch(Exception e)
             {
-               checkDouble("Hourly Rate",hourlyRateText.getText());         
+               checkDouble("Hourly Rate",hourlyRateText.getText());   
+               appendToFile(e);
             }
     }
     
@@ -1291,7 +1441,8 @@ public class MainGUI extends JFrame
             }
             catch(Exception e)
             {
-               checkInt("ID Number",idNumberText.getText());         
+               checkInt("ID Number",idNumberText.getText());     
+               appendToFile(e);
             }
         
     }
@@ -1320,7 +1471,8 @@ public class MainGUI extends JFrame
             }
             catch(Exception e)
             {
-               checkInt("sin",sinText.getText());         
+               checkInt("sin",sinText.getText()); 
+               appendToFile(e);
             }
             
             try
@@ -1329,7 +1481,8 @@ public class MainGUI extends JFrame
             }
             catch(Exception e)
             {
-               checkInt("day",dayText.getText());         
+               checkInt("day",dayText.getText()); 
+               appendToFile(e);
             }
              
             try
@@ -1338,7 +1491,8 @@ public class MainGUI extends JFrame
             }
             catch(Exception e)
             {
-               checkInt("month",monthText.getText());         
+               checkInt("month",monthText.getText()); 
+               appendToFile(e);
             }
               
             try
@@ -1347,7 +1501,8 @@ public class MainGUI extends JFrame
             }
             catch(Exception e)
             {
-               checkInt("year",yearText.getText());         
+               checkInt("year",yearText.getText()); 
+               appendToFile(e);
             }        
     }
     
@@ -1372,6 +1527,279 @@ public class MainGUI extends JFrame
     {
         keepGoing = false;
         System.out.println("Please only enter a numberic value for "+textbox+" You entered "+example);
+    }
+    
+     public void checkDirectory()
+    {
+        try
+        {
+
+            String directoryName = "D:/FinalProject/Error";
+            File directory = new File("D:/FinalProject/Error");
+
+            if (!directory.exists())
+            {
+                System.out.println("Creating directory: " + directoryName);
+                boolean exists = false;
+
+                try
+                {
+                    directory.mkdirs();
+                    exists = true;
+                    System.out.println("Directory created.");
+                }
+                catch(SecurityException error)
+                {
+                    //handle error
+                    appendToFile(error);
+                }
+            }
+            else
+            {
+                System.out.println("Exists.");
+            }
+        }
+        catch(SecurityException error)
+        {
+            appendToFile(error);
+        }
+        catch(Exception error)
+        {
+            appendToFile(error);
+        }
+        
+    }
+    
+    //Create a method that appends data to a file
+    public void appendToFile(Exception exceptionError)
+    {
+        checkDirectory();
+        
+        try
+        {
+            File file = new File("D:/FinalProject/Error/errorLog.txt");
+            String message = exceptionError.toString();
+            String ioDate = "Date: " + date.getTime();
+            String ioLabel = "Error Description:";
+            String ioError = message;
+
+            if (!file.exists())
+            {
+                System.out.println("No such file.");
+                file.createNewFile();
+            }
+
+
+            FileWriter fileWriter = 
+                    new FileWriter("D:/FinalProject/Error/errorLog.txt", true);
+            
+
+            bufferWriter = new BufferedWriter(fileWriter);
+            
+            bufferWriter.newLine();
+            bufferWriter.write(ioDate);
+            bufferWriter.newLine();
+            bufferWriter.write(ioLabel);
+            bufferWriter.newLine();
+            bufferWriter.write(ioError);
+            bufferWriter.newLine();
+
+            bufferWriter.close();
+            
+            
+        }
+        catch(IOException | SecurityException error)
+        {
+            //Handle exception
+            
+        }
+
+    }
+    
+    //method to add employee to db
+    private void addEmployeeToDB(Employee employee)
+    {
+        try
+        {
+            conn = DriverManager.getConnection(dbURL, dbUsername, dbPassword);
+            statement = conn.createStatement();
+                        
+            String sql = "INSERT INTO employees VALUES ('" + 
+                    employee.getFirstName() + "', '" + 
+                    employee.getLastName() + "', '" +
+                    employee.getGender() + "', '" +
+                    employee.getAddress() + "', '" +
+                    employee.getPhoneNumber() + "', '" +
+                    employee.getSIN() + "', '" +
+                    employee.getDateOfBirth() + "', '" +
+                    employee.getPosition() + "', '" +
+                    employee.getEmployeeStatus() + "', '" +
+                    employee.getDepartment() + "', '" +
+                    employee.getIDNumber() + "')";
+
+            statement.executeUpdate(sql);   
+            
+            //show confirm  
+            JOptionPane.showMessageDialog(null, "Employee: " + employee.getFullName() 
+                    + " has been added to the database.",
+                "Employee Added", WIDTH);
+        }
+        catch(SQLException error)
+        {
+            JOptionPane.showMessageDialog(null, "An error has occurred", 
+                    "Error", WIDTH);
+            
+            appendToFile(error);
+        }
+    }
+    
+    //method to search db for employee
+    private void searchEmployeeDB(String firstName, String lastName)
+    {
+        try
+        {
+            conn = DriverManager.getConnection(dbURL, dbUsername, dbPassword); 
+        }
+        catch(SQLException error)
+        {
+            JOptionPane.showMessageDialog(null, "An error has occurred", 
+                    "Error", WIDTH);
+            
+            appendToFile(error);
+        }
+        
+        try
+        {
+            //If connection was successful
+            if (conn != null)
+            {
+                statement = conn.createStatement();
+                        
+                String sql = "SELECT * FROM employees WHERE firstName = '" + firstName + "'";
+
+                result = statement.executeQuery(sql);  
+
+                //show confirm  
+                JOptionPane.showMessageDialog(null, "Searching the database... ",
+                    "Search", WIDTH);
+                
+                //Add data to the table
+                ResultSetMetaData metaData = result.getMetaData();
+        
+                //get the column names and store into vector
+                Vector<String> columnNames = new Vector<String>();
+                //column count
+                int columnCount = metaData.getColumnCount();
+                //loop to build the column names
+                for(int i=1; i<=columnCount;i++)
+                {
+                    columnNames.add(metaData.getColumnName(i));
+                }
+                //Create the vector to hold the data(Vectors of Vectors)
+                //this vector all rows
+                Vector<Vector<Object>> tableData = new Vector<Vector<Object>>();
+
+                //go through the resultset
+                while(result.next())
+                {
+                    //this will store each row
+                    Vector<Object> rowVector =  new Vector<Object>();
+                    //loop through the resultset and get each object/row
+                    for(int colIndex = 1; colIndex<=columnCount;colIndex++)
+                    {
+                        rowVector.add(result.getObject(colIndex));
+                    }
+                    tableData.add(rowVector);
+                }
+                
+                //display the data into a JTabel
+                JTable tempTable = new JTable(tableData, columnNames);
+                
+                //Remove empty scrollPane and revalidate
+                searchPanelBottom.remove(scrollPane);
+                searchPanelBottom.revalidate();
+                searchPanelBottom.repaint();
+                
+                //Set scrollPane = new JScrollPane(tempTable) and add
+                scrollPane = new JScrollPane(tempTable);
+                scrollPane.setPreferredSize(tableSize);
+                searchPanelBottom.add(scrollPane);
+                
+                
+            }  
+            
+        }
+        catch(SQLException error)
+        {
+            appendToFile(error);
+        }
+    }
+    
+    //Method to set JLabels and Textfields for employee search
+    private void setEmpFields()
+    {
+        //Create the labels and text boxes
+        resultFirstNameLabel = new JLabel("FirstName");
+        resultLastNameLabel = new JLabel("Last Name");
+        searchGenderLabel = new JLabel("Gender");
+        searchAddressLabel = new JLabel("Address");
+        searchPhoneNumberLabel = new JLabel("Phone Number");
+        searchSinNumberLabel = new JLabel("SIN"); 
+        searchDateOfBirthLabel = new JLabel("Birth Date");
+        searchPositionLabel = new JLabel("Position");
+        searchStatusLabel = new JLabel("Status");
+        searchDepartmentLabel = new JLabel("Department");
+        searchIDNumberLabel = new JLabel("ID");
+        
+        resultFirstNameText = new JTextField(15);
+        resultLastNameText = new JTextField(15);
+        searchGenderText = new JTextField(10);
+        searchAddressText = new JTextField(30);
+        searchPhoneNumberText = new JTextField(10);
+        searchSinNumberText = new JTextField(9);
+        searchDateOfBirthText = new JTextField(10);
+        searchPositionText = new JTextField(40);
+        searchStatusText = new JTextField(30);
+        searchDepartmentText = new JTextField(40);
+        searchIDNumberText = new JTextField(8);
+        
+        
+        //Set JLabels and Textfields
+        resultFirstNameText.setText(searchEmp.getFirstName());
+        resultLastNameText.setText(searchEmp.getLastName());
+        searchGenderText.setText(searchEmp.getGender());
+        searchAddressText.setText(searchEmp.getAddress());
+        searchPhoneNumberText.setText(searchEmp.getAddress());
+        searchSinNumberText.setText(Integer.toString(searchEmp.getSIN()));
+        searchDateOfBirthText.setText(searchEmp.getDateOfBirth());
+        searchPositionText.setText(searchEmp.getPosition());
+        searchStatusText.setText(searchEmp.getEmployeeStatus());
+        searchDepartmentText.setText(searchEmp.getDepartment());
+        searchIDNumberText.setText(Integer.toString(searchEmp.getIDNumber()));
+        
+        //Add to bottom frame and display
+        searchPanelBottom.add(resultFirstNameLabel);
+        searchPanelBottom.add(resultFirstNameText);
+        /*searchPanelBottom.add();
+        searchPanelBottom.add();
+        searchPanelBottom.add();
+        searchPanelBottom.add();
+        searchPanelBottom.add();
+        searchPanelBottom.add();
+        searchPanelBottom.add();
+        searchPanelBottom.add();
+        searchPanelBottom.add();
+        searchPanelBottom.add();
+        searchPanelBottom.add();
+        searchPanelBottom.add();
+        searchPanelBottom.add();
+        searchPanelBottom.add();
+        searchPanelBottom.add();
+        searchPanelBottom.add();
+        searchPanelBottom.add();
+        searchPanelBottom.add();
+        searchPanelBottom.add();
+        searchPanelBottom.add();*/
     }
     
     //main
