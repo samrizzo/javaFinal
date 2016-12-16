@@ -20,7 +20,7 @@ public class Customer
     }
     
     public Customer(String firstName, String lastName, String address, 
-            String phoneNumber, String city, String postalCode, Order custOrder) 
+            String phoneNumber, String city, String postalCode) 
     {
         this.firstName = firstName;
         this.lastName = lastName;
@@ -28,7 +28,6 @@ public class Customer
         this.phoneNumber = phoneNumber;
         this.city = city;
         this.postalCode = postalCode;
-        this.custOrder = custOrder;
         
     } // end of Customer constructor 
     
