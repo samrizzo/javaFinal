@@ -17,8 +17,9 @@ public class Order
     
     private Employee employee;
     
-    private int orderNumber;
-    private double subTotal, total;
+    private int orderNumber, empID, itemsSold;
+    private double subTotal, total, orderTotal;
+    private String productList;
     
     private final double salesTax = 0.13;
     
@@ -30,6 +31,14 @@ public class Order
     public Order()
     {
         // Empty Constructor
+    }
+    
+    public Order(int empID, int itemsSold, String productList, double orderTotal)
+    {
+        this.empID = empID;
+        this.itemsSold = itemsSold;
+        this.productList = productList;
+        this.orderTotal = orderTotal;
     }
     
     public Order(int orderNumber, Employee employee, Product product)
@@ -61,11 +70,52 @@ public class Order
         this.product = product;
     }
     
+    public void setEmpID(int empID)
+    {
+        this.empID = empID;
+    }
+    
+    public void setItemsSold(int itemsSold)
+    {
+        this.itemsSold = itemsSold;
+    }
+    
+    public void setProductList(String productList)
+    {
+        this.productList = productList;
+    }
+    
+    public void setOrderTotal(double orderTotal)
+    {
+        this.orderTotal = orderTotal;
+    }
+    
     //Return the ID of the employee
     public int getEmployeeID()
     {
         return employee.getIDNumber();
     }
+    
+    public int getEmpID()
+    {
+        return this.empID;
+    }
+    
+    public int getItemsSold()
+    {
+        return this.itemsSold;
+    }
+    
+    public String getProductList()
+    {
+        return this.productList;
+    }
+    
+    public double getOrderTotal()
+    {
+        return this.orderTotal;
+    }
+    
     
     /**
      * This method adds a product to the products ArrayList

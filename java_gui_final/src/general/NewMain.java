@@ -31,6 +31,12 @@ public class NewMain {
         System.out.println(o.getEmployeeID());
         
         System.out.println(s.getDateOfBirth());
+        
+        String productList = "Product 1\n";
+        String productName = "Product 2";
+        String productNameList = productList.concat(productName);
+        
+        System.out.println(productNameList);
     }
     
 }

@@ -32,6 +32,7 @@ import java.util.Vector;
 import javax.swing.table.DefaultTableModel;
 import manufacturer.Manufacturer;
 import product.Product;
+import sales.Order;
 
 
 /**
@@ -44,16 +45,23 @@ public class MainGUI extends JFrame
     private final Dimension dim = Toolkit.getDefaultToolkit().getScreenSize();
     
     //ArrayList for products sold
-    private ArrayList<Product> soldItems = new ArrayList();
+    private final ArrayList<Product> soldItems = new ArrayList();
     
     //Current product Object
     private Product currentProd;
+    
+    //Order object for reference
+    private Order order;
     
     //Counter to keep track of sales
     private int itemsSoldCount = 0;
     
     //Temp total and total cost
     private double tempTotal = 0.00, totalCost = 0.00;
+    
+    //Commission Rate to work with on sales Panel
+    private final double commissionRate = 0.05;
+    private double totalCommissions = 0.00;
     
     //Employee and Product Search Objects
     private Employee searchEmp;
@@ -63,10 +71,14 @@ public class MainGUI extends JFrame
     private final ArrayList<Employee> employeeList = new ArrayList<>();
     private final ArrayList<Product> productList = new ArrayList<>();
     
-    //String array to hold product, manufacturer and employee names
-    String[] productNameArray;
-    String[] employeeNameArray;
-    String[] manufacturerNameArray;
+    //ArrayList for order search
+    private final ArrayList<Order> orderList = new ArrayList<>();
+    
+    //String array to hold product, order, manufacturer and employee names
+    private String[] productNameArray;
+    private String[] employeeNameArray;
+    private String[] manufacturerNameArray;
+    private int[] orderNameArray;
     
     //Manufacturer object to hold data for product tab
     private Manufacturer temp;
@@ -92,7 +104,7 @@ public class MainGUI extends JFrame
             innerEmployeePanel, employeeDOBPanel, employeePanelBottom, employeePayPanel, 
             inventoryPanel = new JPanel(), inventoryPanelTop, innerInventoryPanel, inventoryPanelNorth, inventoryPanelBottom,
             searchPanel = new JPanel(), innerSearchPanel, searchPanelTop, searchPanelNorth, searchPanelBottom, 
-            searchSalesPanel = new JPanel(), innerSearchSalesPanel, searchSalesPanelTop, searchSalesPanelNorth, searchSalesPanelBottom,
+            searchSalesPanel = new JPanel(), innerSearchSalesPanel, searchSalesPanelTop, searchSalesPanelBottom,
             salesPanel = new JPanel(), salesPanelTop, salesPanelBottom, salesButtonPanel, innerSalesPanel, innerSalesButtonPanel,
             customerPanel = new JPanel(), customerPanelTop, customerPanelBottom, 
             employeeButtonPanel, inventoryButtonPanel, searchButtonPanel,
@@ -136,11 +148,6 @@ public class MainGUI extends JFrame
     //JScrollPane for JTable
     private JScrollPane scrollPane = new JScrollPane();
     
-    private JTextField resultFirstNameText, resultLastNameText, searchGenderText, searchAddressText, 
-            searchPhoneNumberText, searchSinNumberText, searchDateOfBirthText, searchPositionText, 
-            searchStatusText, searchDepartmentText, searchIDNumberText, resultProductNameText, 
-            searchProductDescriptionText, searchProductCostText, resultProductNumberText;
-    
     //JLabels for Inventory Tab
     private JLabel productNameLabel, productDescriptionLabel, productCostLabel, 
             productNumberLabel, manufacturerSelectionLabel, manufacturerNameLabel, manufacturerAddressLabel, 
@@ -168,12 +175,12 @@ public class MainGUI extends JFrame
     //JLabels for Create Sales Tab
     private JLabel orderNumberLabel, employeeSelectionLabel, employeeIDLabel, productSelectionLabel, 
             saleProductNameLabel, saleProductNumberLabel, saleProductDescriptionLabel, 
-            saleProductCostLabel, totalCostLabel, itemsSoldLabel;
+            saleProductCostLabel, totalCostLabel, itemsSoldLabel, commissionPaidLabel;
     
     //JTextField for Create Sales Tab
     private JTextField orderNumberText, employeeIDText, saleProductNameText, 
             saleProductNumberText, saleProductDescriptionText, saleProductCostText, 
-            totalCostText, itemsSoldText;
+            totalCostText, itemsSoldText, commissionPaidText;
     
     //JButtons for Create Sales Tab
     private JButton addItemButton, addTransactionButton;
@@ -182,13 +189,43 @@ public class MainGUI extends JFrame
     private JComboBox employeeSaleBox = new JComboBox();
     private JComboBox productSaleBox = new JComboBox();
     
+    //JLabels for Search Sales Tab
+    private JLabel employeeIDSelectionLabel;
+    
+    private JTextField employeeIDSelectionText;
+    
+    //JButton for Search Sales Tab
+    private JButton searchSaleButton;
+    
+    //JTable for transactionData in Search Sales Tab
+    private JTable transactions = new JTable(0,0);
+    
+    //JScrollPane for JTable in Search Sales Tab
+    private JScrollPane transactionPane = new JScrollPane();
+    
+    //JLabels for admin Panel
+    private JLabel adminFirstNameLabel, adminLastNameLabel,adminGenderLabel, adminAddressLabel, 
+            adminPhoneNumberLabel, adminSinLabel, adminYearLabel, adminMonthLabel, adminDayLabel,adminPositionLabel, 
+            adminStatusLabel, adminDepartmentLabel, adminIDNumberLabel, adminProductNameLabel, adminProductDescriptionLabel,
+            adminProductCostLabel, adminProductNumberLabel,adminManufacturerNameLabel, 
+            adminManufacturerAddressLabel, adminManufacturerPhoneLabel, adminManufacturerIDLabel, adminEmployeeIDLabel, 
+            adminProductListLabel, adminTotalCostLabel, adminItemsSoldLabel;
+            
+    //JTextFields for adminPanel
+    private JTextField adminFirstNameText, adminLastNameText,
+            adminGenderText, adminAddressText, adminPhoneNumberText, adminSinText, adminYearText, adminMonthText, 
+            adminDayText, adminPositionText, adminStatusText, adminDepartmentText,adminIDNumberText, adminProductNameText, 
+            adminProductDescriptionText, adminProductCostText, adminProductNumberText, adminManufacturerNameText, 
+            adminManufacturerAddressText, adminManufacturerPhoneText, adminManufacturerIDText, adminEmployeeIDText, 
+            adminProductListText, adminTotalCostText, adminItemsSoldText;
+    
     //ButtonGroup + JRadio Buttons
     private final ButtonGroup searchBox = new ButtonGroup();
     private JButton exitButton, submitButton, createButton, 
             searchButton, createUserButton;
     
     //ButtonGroup for userStatus selection
-    private final ButtonGroup userStatusBox = new ButtonGroup();
+    private ButtonGroup userStatusBox = new ButtonGroup();
     
     //JRadioButtons to track search selection
     private JRadioButton employeeButton, productButton, regularUserButton, adminUserButton;
@@ -224,8 +261,8 @@ public class MainGUI extends JFrame
     //username and password for db connection
     //private String dbUsername = "gc200271677";
     //private String dbPassword = "Y-xX3iij";
-    private String dbUsername = "gc200298516";
-    private String dbPassword = "E-6!t7Xe";
+    private final String dbUsername = "gc200298516";
+    private final String dbPassword = "E-6!t7Xe";
     
     //Setup db query and connection
     //private final String dbURL = "jdbc:mysql://sql.computerstudi.es:3306/gc200271677";
@@ -316,13 +353,14 @@ public class MainGUI extends JFrame
         
         //Add seearchSalesPanel
         searchSalesPanel.setLayout(new BorderLayout());
-        searchSalesPanel.add(innerSearchSalesPanel, BorderLayout.NORTH);
+        searchSalesPanel.add(searchSalesPanelTop, BorderLayout.NORTH);
+        searchSalesPanel.add(innerSearchSalesPanel, BorderLayout.CENTER);
         searchSalesPanel.add(searchSalesPanelBottom, BorderLayout.SOUTH);
         
         //Add panels to Customer Panel
         customerPanel.setLayout(new BorderLayout());
         customerPanel.add(customerPanelTop, BorderLayout.NORTH);
-        customerPanel.add(customerPanelBottom, BorderLayout.SOUTH);
+        customerPanel.add(customerPanelBottom, BorderLayout.CENTER);
 
         // JComboBox for type of employees
         employeeType = new JComboBox(typeOfEmployee);
@@ -334,6 +372,9 @@ public class MainGUI extends JFrame
         // Set the title and layout of the loginFrame
         loginFrame.setTitle("Login");
         loginFrame.setLayout(new BorderLayout());
+        
+        //Set default close
+        loginFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
        
         //Create the loginPanel and set the layout
         loginPanelTop = new JPanel();
@@ -354,13 +395,17 @@ public class MainGUI extends JFrame
         regularUserButton = new JRadioButton("Regular");
         adminUserButton = new JRadioButton("Admin");
         
+        //Add buttons to buttongroup
+        userStatusBox.add(regularUserButton);
+        userStatusBox.add(adminUserButton);
+        
+        //Set the default selection to regular user
+        regularUserButton.setSelected(true);
+        
         //Add ItemListener to the JRadioButtons
         UserSelectButtonHandler userSelection = new UserSelectButtonHandler();
         regularUserButton.addItemListener(userSelection);
         adminUserButton.addItemListener(userSelection);
-        
-        //On load set regular user as selected
-        regularUserButton.setSelected(true);
        
         //Set the username and password variables equal to what was entered
         username = loginUsernameText.getText();
@@ -424,6 +469,69 @@ public class MainGUI extends JFrame
         adminSelectPanel = new JPanel();
         adminSelectPanel.setLayout(new GridLayout(1, 4));
         
+        //Create the adminPanelTop and set the layout
+        adminPanelTop = new JPanel();
+        adminPanelTop.setLayout(new GridLayout(6,2));
+        
+        //Create all the labels and textfields for adminPanelTop
+        adminFirstNameLabel = new JLabel("First Name");
+        adminLastNameLabel = new JLabel("Last Name");
+        adminGenderLabel = new JLabel("Gender");
+        adminPhoneNumberLabel = new JLabel("Phone Number");
+        adminAddressLabel = new JLabel("Address");
+        adminSinLabel = new JLabel("SIN");
+        adminYearLabel = new JLabel("Year");
+        adminMonthLabel = new JLabel("Month");
+        adminDayLabel = new JLabel("Day");  
+        adminPositionLabel = new JLabel("Position");
+        adminStatusLabel = new JLabel("Status");
+        adminDepartmentLabel = new JLabel("Department");
+        adminIDNumberLabel = new JLabel("ID"); 
+        
+        adminProductNameLabel = new JLabel("Product Name");
+        adminProductDescriptionLabel = new JLabel("Description");
+        adminProductCostLabel = new JLabel("Cost");
+        adminProductNumberLabel = new JLabel("Product Number");
+        
+        adminManufacturerNameLabel = new JLabel("Manufacturer Name");
+        adminManufacturerAddressLabel = new JLabel("Address");
+        adminManufacturerPhoneLabel = new JLabel("Phone Numeber");
+        adminManufacturerIDLabel = new JLabel("ID Number");
+        
+        adminEmployeeIDLabel = new JLabel("Employee ID");
+        adminProductListLabel = new JLabel("Products");
+        adminTotalCostLabel = new JLabel("Total Cost");
+        adminItemsSoldLabel = new JLabel("Items Sold");
+        
+        adminFirstNameText = new JTextField(15);
+        adminLastNameText = new JTextField(15);
+        adminGenderText = new JTextField(10);
+        adminAddressText = new JTextField(30);
+        adminPhoneNumberText = new JTextField(10);
+        adminSinText = new JTextField(9);
+        adminYearText = new JTextField(4);
+        adminMonthText = new JTextField(2);
+        adminDayText = new JTextField(2);
+        adminPositionText = new JTextField(40);
+        adminStatusText = new JTextField(30);
+        adminDepartmentText = new JTextField(40);
+        adminIDNumberText = new JTextField(8);
+        
+        adminProductNameText = new JTextField(15);
+        adminProductDescriptionText = new JTextField(30);
+        adminProductCostText = new JTextField(10);
+        adminProductNumberText = new JTextField(10); 
+        
+        adminManufacturerNameText = new JTextField(20);
+        adminManufacturerAddressText = new JTextField(20);
+        adminManufacturerPhoneText = new JTextField(10);
+        adminManufacturerIDText = new JTextField(10);
+        
+        adminEmployeeIDText = new JTextField(8);
+        adminProductListText = new JTextField(400);
+        adminItemsSoldText = new JTextField(2);
+        adminTotalCostText = new JTextField(8);
+
         //Add a title to the selectPanel
         adminSelectPanel.setBorder(BorderFactory.createTitledBorder
         ("Please select the object you want to edit/delete"));
@@ -434,14 +542,20 @@ public class MainGUI extends JFrame
         adminSalesButton = new JRadioButton("Sales");
         adminManufacturerButton = new JRadioButton("Manufacturer");
         
+        //Add buttons to button group
+        adminButtonGroup.add(adminEmployeeButton);
+        adminButtonGroup.add(adminProductButton);
+        adminButtonGroup.add(adminSalesButton);
+        adminButtonGroup.add(adminManufacturerButton);
+        
         //Create the ItemListener for the JRadioButtons
         AdminButtonHandler adminListener = new AdminButtonHandler();
         
         //Add ActionListener to all JRadioButtons for adminPanel
-        adminEmployeeButton.addItemListener(adminListener);
-        adminProductButton.addItemListener(adminListener);
-        adminSalesButton.addItemListener(adminListener);
-        adminManufacturerButton.addItemListener(adminListener);
+        adminEmployeeButton.addActionListener(adminListener);
+        adminProductButton.addActionListener(adminListener);
+        adminSalesButton.addActionListener(adminListener);
+        adminManufacturerButton.addActionListener(adminListener);
         
         //Add JRadioButtons to the adminPanelTop
         adminSelectPanel.add(adminEmployeeButton);
@@ -450,6 +564,7 @@ public class MainGUI extends JFrame
         adminSelectPanel.add(adminManufacturerButton);
         
         adminPanel.add(adminSelectPanel, BorderLayout.NORTH);
+        adminPanel.add(adminPanelTop, BorderLayout.CENTER);
     }
     
     //Build Sales Panel
@@ -471,6 +586,7 @@ public class MainGUI extends JFrame
         saleProductCostLabel = new JLabel("Product Cost");
         itemsSoldLabel = new JLabel("Items Sold");
         employeeIDLabel = new JLabel("Employee ID");
+        commissionPaidLabel = new JLabel("Employee Commission");
         totalCostLabel = new JLabel("Total Cost");
         
         employeeIDText = new JTextField(6);
@@ -480,6 +596,7 @@ public class MainGUI extends JFrame
         saleProductDescriptionText = new JTextField(100);
         saleProductCostText = new JTextField(6);
         totalCostText = new JTextField(8);
+        commissionPaidText = new JTextField(8);
         
         //Fill ComboBox with data from db
         getEmployeeInfo();
@@ -488,6 +605,17 @@ public class MainGUI extends JFrame
         //JComboBoxes for selections
         employeeSaleBox = new JComboBox(employeeNameArray);
         productSaleBox = new JComboBox(productNameArray);
+        
+        //Add itemStateListener to comboBoxes
+        EmployeeComboBoxListener empListener = new EmployeeComboBoxListener();
+        employeeSaleBox.addActionListener(empListener);
+        
+        ProductComboBoxListener prodListener = new ProductComboBoxListener();
+        productSaleBox.addActionListener(prodListener);
+        
+        //Set selected index for each box
+        employeeSaleBox.setSelectedIndex(0);
+        productSaleBox.setSelectedIndex(0);
         
         //Add to salesPanelTop
         salesPanelTop.add(employeeSelectionLabel);
@@ -534,17 +662,37 @@ public class MainGUI extends JFrame
         salesPanelBottom.add(saleProductDescriptionText);
         salesPanelBottom.add(saleProductCostLabel);
         salesPanelBottom.add(saleProductCostText);
+        salesPanelBottom.add(commissionPaidLabel);
+        salesPanelBottom.add(commissionPaidText);
         salesPanelBottom.add(totalCostLabel);
         salesPanelBottom.add(totalCostText);
 
+        //Set the inital text of the items sold, commission rate, and total cost
+        itemsSoldText.setText("0");
+        totalCostText.setText("0.00");
+        commissionPaidText.setText("0.00");
     }
     
     //Build SearchSales Panel
     private void buildSearchSalesPanel()
     {
         //Create the salesPanel North and set layout
-        searchSalesPanelNorth = new JPanel();
-        searchSalesPanelNorth.setLayout(new BorderLayout());
+        searchSalesPanelTop = new JPanel();
+        searchSalesPanelTop.setLayout(new FlowLayout());
+        
+        //Add titled border
+        TitledBorder title;
+        title = BorderFactory.createTitledBorder("Enter Employee ID from order ^to search");
+        searchSalesPanelTop.setBorder(title);
+        title.setTitleJustification(TitledBorder.CENTER);        
+                
+        //Create label and textbox
+        employeeIDSelectionLabel = new JLabel("Employee ID");
+        employeeIDSelectionText = new JTextField(10);
+        
+        //Add to searchSalesPanelTop
+        searchSalesPanelTop.add(employeeIDSelectionLabel);
+        searchSalesPanelTop.add(employeeIDSelectionText);
         
         //Create the innerSearchSalesPanel and set layout
         innerSearchSalesPanel = new JPanel();
@@ -552,7 +700,29 @@ public class MainGUI extends JFrame
         
         //Create the searchSalesPanelBottom and set layout
         searchSalesPanelBottom = new JPanel();
-        searchSalesPanelBottom.setLayout(new GridLayout(12,1));
+        searchSalesPanelBottom.setLayout(new FlowLayout());
+        
+        //Create the JScrollPane and set dimensions
+        transactionPane = new JScrollPane(transactions);
+        transactionPane.setPreferredSize(tableSize);
+        
+        //Add scrollPane to the searchSalesPanelBottom
+        innerSearchSalesPanel.add(transactionPane);
+        
+        //Create search sale button
+        searchSaleButton = new JButton("Search");
+        exitButton = new JButton("Exit");
+        
+        //Add button listener to search db
+        SearchSalesButtonListener ssbListener = new SearchSalesButtonListener();
+        searchSaleButton.addActionListener(ssbListener);
+        
+        ExitButtonListener exitListener = new ExitButtonListener();
+        exitButton.addActionListener(exitListener);
+        
+        //Add buttons to the bottom panel
+        searchSalesPanelBottom.add(searchSaleButton);
+        searchSalesPanelBottom.add(exitButton);
     }
 
     //Build Customer Panel
@@ -607,6 +777,7 @@ public class MainGUI extends JFrame
         
         //Add button to panel
         customerPanelBottom.add(addCustomerButton);
+ 
     }
     
     //Build Employee Panel
@@ -760,12 +931,12 @@ public class MainGUI extends JFrame
         //Create the labels
         hourlyRateLabel = new JLabel("Hourly Rate");
         baseSalaryLabel = new JLabel("Salary");
-        commissionRateLabel = new JLabel("Commission Rate");     
+        commissionPaidLabel = new JLabel("Commission Rate");     
         
         //Create the textboxes
         hourlyRateText = new JTextField();
         baseSalaryText = new JTextField();
-        commissionRateText = new JTextField();
+        commissionPaidText = new JTextField();
         
        
         // checks the selected index for employee type
@@ -1074,6 +1245,22 @@ public class MainGUI extends JFrame
         salesButtonPanel.add(exitButton);
     }
     
+    //Method to connect to db
+    private void connectToDB()
+    {
+        try
+        {
+            conn = DriverManager.getConnection(dbURL, dbUsername, dbPassword); 
+        }
+        catch(SQLException error)
+        {
+            JOptionPane.showMessageDialog(null, "An error has occurred", 
+                    "Error", WIDTH);
+            
+            appendToFile(error);
+        }
+    }
+    
     private class AddItemButtonListener implements ActionListener
         {
             @Override
@@ -1087,20 +1274,32 @@ public class MainGUI extends JFrame
                 
                 else 
                 {
-                    itemsSoldCount = itemsSoldCount +1;
+                    //Increment items sold count
+                    itemsSoldCount++;
+                    
+                    //Set the textbox values
                     itemsSoldText.setText(Integer.toString(itemsSoldCount));
-                    tempTotal = Double.parseDouble(productCostText.getText());
+                    tempTotal = Double.parseDouble(saleProductCostText.getText());
+                    tempTotal = Double.parseDouble(saleProductCostText.getText());
                     
-                    totalCost = tempTotal + totalCost;
-                    totalCostText.setText(Double.toString(tempTotal));
+                    //Calculate total cost of order
+                    totalCost += tempTotal;
+                    totalCostText.setText(Double.toString(totalCost));
                     
-                    Manufacturer tempManu = new Manufacturer();
+                    //Calculate commission
+                    totalCommissions += (Double.parseDouble(saleProductCostText.getText()) * commissionRate);
                     
-                    currentProd = new Product(productDescriptionText.getText(),
-                            productNameText.getText(), Integer.parseInt(productNumberText.getText()), 
-                            Double.parseDouble(productCostText.getText()), tempManu);
+                    //Set the commissionRate text box
+                    commissionPaidText.setText(Double.toString(totalCommissions));
                     
-                    soldItems.add(currentProd);
+                    temp = new Manufacturer();
+                    
+                        Product product = new Product(saleProductDescriptionText.getText(),
+                            saleProductNameText.getText(), Integer.parseInt(saleProductNumberText.getText()), 
+                            Double.parseDouble(saleProductCostText.getText()), temp);
+                    
+                    soldItems.add(product);
+                    
                 }
             }
         }
@@ -1108,17 +1307,7 @@ public class MainGUI extends JFrame
     //Method for getting manufacturer info
     private void getManufacturerInfo()
     {
-        try
-        {
-            conn = DriverManager.getConnection(dbURL, dbUsername, dbPassword); 
-        }
-        catch(SQLException error)
-        {
-            JOptionPane.showMessageDialog(null, "An error has occurred", 
-                    "Error", WIDTH);
-            
-            appendToFile(error);
-        }
+        connectToDB();
         
         try
         {
@@ -1172,21 +1361,72 @@ public class MainGUI extends JFrame
         manufacturerNameArray = names;
     }
     
-    //Method for getting product info
-    private void getProductInfo()
+    //Method for getting transaction info
+    private void getTransactionInfo()
     {
         //Connect to db
+        connectToDB();
+        
         try
         {
-            conn = DriverManager.getConnection(dbURL, dbUsername, dbPassword); 
+            //If connection was successful
+            if (conn != null)
+            {
+                statement = conn.createStatement();
+                        
+                //Selection query
+                String sql = "SELECT * FROM sales";
+
+                //execute statement
+                result = statement.executeQuery(sql);  
+                
+                while(result.next())
+                {
+                    //Create new Sale Object to store data
+                    order = new Order();
+                    
+                    //Set attributes of product
+                    order.setEmpID(Integer.parseInt(result.getString("empID")));
+                    order.setItemsSold(Integer.parseInt(result.getString("itemsSold")));
+                    order.setProductList(result.getString("products"));
+                    order.setOrderTotal(Double.parseDouble(result.getString("orderTotal")));
+                    
+                    //Add to array of Orders
+                    orderList.add(order);
+                }
+            }  
+            
         }
         catch(SQLException error)
         {
             JOptionPane.showMessageDialog(null, "An error has occurred", 
                     "Error", WIDTH);
-            
             appendToFile(error);
         }
+        
+        //ArrayList to store product names
+        ArrayList<Integer> transactionDetails = new ArrayList<>();
+        
+        //For loop to add productNames to String array
+        for (Order order : orderList) 
+        {
+            transactionDetails.add(order.getEmpID());
+        }
+        
+        //Temp String array for holding product names
+        int[] empIDs = transactionDetails.stream().mapToInt(i -> i).toArray();
+        
+        
+        //Assign orderNameArray to empIDs
+        orderNameArray = empIDs;
+        
+    }
+    
+    //Method for getting product info
+    private void getProductInfo()
+    {
+        //Connect to db
+        connectToDB();
         
         try
         {
@@ -1228,6 +1468,9 @@ public class MainGUI extends JFrame
         //ArrayList to store product names
         ArrayList<String> productNames = new ArrayList<>();
         
+        //Add blank spot product names
+        productNames.add("Select");
+        
         //For loop to add productNames to String array
         for (Product product : productList) 
         {
@@ -1245,17 +1488,7 @@ public class MainGUI extends JFrame
     //Method for getting employee info
     private void getEmployeeInfo()
     {
-        try
-        {
-            conn = DriverManager.getConnection(dbURL, dbUsername, dbPassword); 
-        }
-        catch(SQLException error)
-        {
-            JOptionPane.showMessageDialog(null, "An error has occurred", 
-                    "Error", WIDTH);
-            
-            appendToFile(error);
-        }
+        connectToDB();
         
         try
         {
@@ -1303,6 +1536,7 @@ public class MainGUI extends JFrame
                     searchEmp.setAddress(result.getString("address"));
                     searchEmp.setSIN(Integer.parseInt(result.getString("sinNum")));
                     searchEmp.setDateOfBirth(year, month, day);
+                    searchEmp.setIDNumber(Integer.parseInt(result.getString("empID")));
                     
                     //Add to array of employees
                     employeeList.add(searchEmp);
@@ -1319,6 +1553,9 @@ public class MainGUI extends JFrame
         
         //ArrayList to store employee names
         ArrayList<String> employeeNames = new ArrayList<>();
+        
+        //Add blank spot for employeeNames
+        employeeNames.add("Select");
         
         //For loop to add employeeNames to String array
         for (Employee employee : employeeList) 
@@ -1395,6 +1632,69 @@ public class MainGUI extends JFrame
                 customerPostalCodeText.getText().equals("");
     }
     
+    //class for salespanel combo box
+    private class EmployeeComboBoxListener implements ActionListener
+    {
+        @Override
+        public void actionPerformed(ActionEvent event)
+        {
+            if(employeeSaleBox.getSelectedIndex() == 1)
+            {
+                //set the employee id number to that person
+                employeeIDText.setText(Integer.toString(employeeList.get(0).getIDNumber()));
+            }
+            
+            else if(employeeSaleBox.getSelectedIndex() == 2)
+            {
+                //set the employee id number to that person
+                employeeIDText.setText(Integer.toString(employeeList.get(1).getIDNumber()));
+            }
+            
+            else if(employeeSaleBox.getSelectedIndex() == 3)
+            {
+                //set the employee id number to that person
+                employeeIDText.setText(Integer.toString(employeeList.get(2).getIDNumber()));
+            }
+        }
+    }
+    
+    //class for salespanel combo box
+    private class ProductComboBoxListener implements ActionListener
+    {
+        @Override
+        public void actionPerformed(ActionEvent event)
+        {
+            if(productSaleBox.getSelectedIndex() == 1)
+            {
+                //set the product attributes
+                saleProductNumberText.setText(Integer.toString(productList.get(0).getProductNumber()));
+                saleProductNameText.setText(productList.get(0).getProductName());
+                saleProductDescriptionText.setText(productList.get(0).getProductDescription());
+                saleProductCostText.setText(Double.toString(productList.get(0).getProductCost()));
+            }
+            
+            else if(productSaleBox.getSelectedIndex() == 2)
+            {
+                //set the product attributes
+                saleProductNumberText.setText(Integer.toString(productList.get(1).getProductNumber()));
+                saleProductNameText.setText(productList.get(1).getProductName());
+                saleProductDescriptionText.setText(productList.get(1).getProductDescription());
+                saleProductCostText.setText(Double.toString(productList.get(1).getProductCost()));
+                
+            }
+            
+            else if(productSaleBox.getSelectedIndex() == 3)
+            {
+                //set the product attributes
+                saleProductNumberText.setText(Integer.toString(productList.get(2).getProductNumber()));
+                saleProductNameText.setText(productList.get(2).getProductName());
+                saleProductDescriptionText.setText(productList.get(2).getProductDescription());
+                saleProductCostText.setText(Double.toString(productList.get(2).getProductCost()));
+                
+            }
+        }
+    }
+    
     private class RadioButtonHandler implements ItemListener
     {
         @Override
@@ -1455,31 +1755,218 @@ public class MainGUI extends JFrame
         }
     } 
     
-    private class AdminButtonHandler implements ItemListener
+    private class AdminButtonHandler implements ActionListener
     {
         @Override
-        public void itemStateChanged(ItemEvent event)
+        public void actionPerformed(ActionEvent event)
         {
             if (adminEmployeeButton.isSelected() == true)
             {
+                //Remove other labels and textboxes
+                removeProductLabels();
+                removeSaleLabels();
+                removeManufacturerLabels();
                 
+                //Revalidate
+                adminPanelTop.revalidate();
+                adminPanelTop.repaint();
+                
+                //Set new layout for adminPanelTop
+                adminPanelTop.setLayout(new GridLayout(14, 2));
+                
+                //Add new labels
+                addEmployeeLabels();
             }
             
             else if (adminProductButton.isSelected() == true)
             {
+                //Remove other labels and textboxes
+                removeSaleLabels();
+                removeManufacturerLabels();
+                removeEmployeeLabels();
                 
+                //Revalidate
+                adminPanelTop.revalidate();
+                adminPanelTop.repaint();
+                
+                //Set new layout for adminPanelTop
+                adminPanelTop.setLayout(new GridLayout(10, 2));
+                
+                //Add new Labels
+                addProductLabels();
             }
             
             else if (adminSalesButton.isSelected() == true)
             {
+                //Remove other labels and textboxes
+                removeManufacturerLabels();
+                removeEmployeeLabels();
+                removeProductLabels();
                 
+                //Revalidate
+                adminPanelTop.revalidate();
+                adminPanelTop.repaint();
+                
+                //Set new layout for adminPanelTop
+                adminPanelTop.setLayout(new GridLayout(10, 2));
+                
+                //Add new labels
+                addSaleLabels();
             }
             
             else if (adminManufacturerButton.isSelected() == true)
             {
+                //Remove other labels and textboxes
+                removeProductLabels();
+                removeSaleLabels();
+                removeEmployeeLabels();
                 
+                //Revalidate
+                adminPanelTop.revalidate();
+                adminPanelTop.repaint();
+                
+                //Set new layout for adminPanelTop
+                adminPanelTop.setLayout(new GridLayout(10, 2));
+                
+                //Add new labels
+                addManufacturerLabels();
             }
         }
+    }
+    
+    //The following methods are for adding and removing various types of labels and textboxes
+    
+    private void removeEmployeeLabels()
+    {
+        //Remove employee labels and textboxes
+        adminPanelTop.remove(adminFirstNameLabel);
+        adminPanelTop.remove(adminFirstNameText);
+        adminPanelTop.remove(adminLastNameLabel);
+        adminPanelTop.remove(adminLastNameText);
+        adminPanelTop.remove(adminGenderLabel);
+        adminPanelTop.remove(adminGenderText);
+        adminPanelTop.remove(adminAddressLabel);
+        adminPanelTop.remove(adminAddressText);
+        adminPanelTop.remove(adminPhoneNumberLabel);
+        adminPanelTop.remove(adminPhoneNumberText);
+        adminPanelTop.remove(adminSinLabel);
+        adminPanelTop.remove(adminSinText);
+        adminPanelTop.remove(adminYearLabel);
+        adminPanelTop.remove(adminYearText);
+        adminPanelTop.remove(adminMonthLabel);
+        adminPanelTop.remove(adminMonthText);
+        adminPanelTop.remove(adminDayLabel);
+        adminPanelTop.remove(adminDayText);
+        adminPanelTop.remove(adminPositionLabel);
+        adminPanelTop.remove(adminPositionText);
+        adminPanelTop.remove(adminStatusLabel);
+        adminPanelTop.remove(adminStatusText);
+        adminPanelTop.remove(adminDepartmentLabel);
+        adminPanelTop.remove(adminDepartmentText);
+        adminPanelTop.remove(adminIDNumberLabel);
+        adminPanelTop.remove(adminIDNumberText);  
+    }
+    private void removeProductLabels()
+    {
+        //Remove all the product labels and textboxes
+        adminPanelTop.remove(adminProductNameLabel);
+        adminPanelTop.remove(adminProductNameText);
+        adminPanelTop.remove(adminProductNumberLabel);
+        adminPanelTop.remove(adminProductNumberText);
+        adminPanelTop.remove(adminProductDescriptionLabel);
+        adminPanelTop.remove(adminProductDescriptionText);
+        adminPanelTop.remove(adminProductCostLabel);
+        adminPanelTop.remove(adminProductCostText);
+    }
+    private void removeManufacturerLabels()
+    {
+        //Remove all the manufacturer labels and textboxes
+        adminPanelTop.remove(adminManufacturerNameLabel);
+        adminPanelTop.remove(adminManufacturerNameText);
+        adminPanelTop.remove(adminManufacturerAddressLabel);
+        adminPanelTop.remove(adminManufacturerAddressText);
+        adminPanelTop.remove(adminManufacturerIDLabel);
+        adminPanelTop.remove(adminManufacturerIDText);
+        adminPanelTop.remove(adminManufacturerPhoneLabel);
+        adminPanelTop.remove(adminManufacturerPhoneText);
+    }
+    private void removeSaleLabels()
+    {
+        //Remove all the sale labels and textboxes
+        adminPanelTop.remove(adminEmployeeIDLabel);
+        adminPanelTop.remove(adminEmployeeIDText);
+        adminPanelTop.remove(adminProductListLabel);
+        adminPanelTop.remove(adminProductListText);
+        adminPanelTop.remove(adminTotalCostLabel);
+        adminPanelTop.remove(adminTotalCostText);
+        adminPanelTop.remove(adminItemsSoldLabel);
+        adminPanelTop.remove(adminItemsSoldText);
+    }
+    private void addEmployeeLabels()
+    {
+        //Add the employee labels and textboxes
+        adminPanelTop.add(adminFirstNameLabel);
+        adminPanelTop.add(adminFirstNameText);
+        adminPanelTop.add(adminLastNameLabel);
+        adminPanelTop.add(adminLastNameText);
+        adminPanelTop.add(adminGenderLabel);
+        adminPanelTop.add(adminGenderText);
+        adminPanelTop.add(adminAddressLabel);
+        adminPanelTop.add(adminAddressText);
+        adminPanelTop.add(adminPhoneNumberLabel);
+        adminPanelTop.add(adminPhoneNumberText);
+        adminPanelTop.add(adminSinLabel);
+        adminPanelTop.add(adminSinText);
+        adminPanelTop.add(adminYearLabel);
+        adminPanelTop.add(adminYearText);
+        adminPanelTop.add(adminMonthLabel);
+        adminPanelTop.add(adminMonthText);
+        adminPanelTop.add(adminDayLabel);
+        adminPanelTop.add(adminDayText);
+        adminPanelTop.add(adminPositionLabel);
+        adminPanelTop.add(adminPositionText);
+        adminPanelTop.add(adminStatusLabel);
+        adminPanelTop.add(adminStatusText);
+        adminPanelTop.add(adminDepartmentLabel);
+        adminPanelTop.add(adminDepartmentText);
+        adminPanelTop.add(adminIDNumberLabel);
+        adminPanelTop.add(adminIDNumberText);
+    }
+    private void addProductLabels()
+    {
+        //Add the product labels and textboxes
+        adminPanelTop.add(adminProductNameLabel);
+        adminPanelTop.add(adminProductNameText);
+        adminPanelTop.add(adminProductNumberLabel);
+        adminPanelTop.add(adminProductNumberText);
+        adminPanelTop.add(adminProductDescriptionLabel);
+        adminPanelTop.add(adminProductDescriptionText);
+        adminPanelTop.add(adminProductCostLabel);
+        adminPanelTop.add(adminProductCostText);
+    }
+    private void addManufacturerLabels()
+    {
+        //Add the manufacturer labels and textboxes
+        adminPanelTop.add(adminManufacturerNameLabel);
+        adminPanelTop.add(adminManufacturerNameText);
+        adminPanelTop.add(adminManufacturerAddressLabel);
+        adminPanelTop.add(adminManufacturerAddressText);
+        adminPanelTop.add(adminManufacturerIDLabel);
+        adminPanelTop.add(adminManufacturerIDText);
+        adminPanelTop.add(adminManufacturerPhoneLabel);
+        adminPanelTop.add(adminManufacturerPhoneText);
+    }
+    private void addSaleLabels()
+    {
+        //Add the sale labels and textboxes
+        adminPanelTop.add(adminEmployeeIDLabel);
+        adminPanelTop.add(adminEmployeeIDText);
+        adminPanelTop.add(adminProductListLabel);
+        adminPanelTop.add(adminProductListText);
+        adminPanelTop.add(adminTotalCostLabel);
+        adminPanelTop.add(adminTotalCostText);
+        adminPanelTop.add(adminItemsSoldLabel);
+        adminPanelTop.add(adminItemsSoldText);
     }
     
     //private inner class for event handling
@@ -1568,6 +2055,20 @@ public class MainGUI extends JFrame
         }
     }
     
+    //private inner class for event handling
+    private class SearchSalesButtonListener implements ActionListener
+    {
+        @Override
+        public void actionPerformed(ActionEvent event)
+        {
+                //Search DB
+                searchTransactionDB(employeeIDSelectionText.getText());
+                
+                //Clear search box
+                employeeIDSelectionText.setText("");
+        }
+    }
+    
     private class UserSelectButtonHandler implements ItemListener
     {
         @Override
@@ -1577,10 +2078,12 @@ public class MainGUI extends JFrame
             // code for changing labels and textboxes based on search selection
             if(regularUserButton.isSelected() == true)
             {
+                regularUserButton.setSelected(true);
                 isAdmin = false;
             }
             else if(adminUserButton.isSelected() == true)
             {
+                adminUserButton.setSelected(true);
                 isAdmin = true;
             } 
         }
@@ -1620,30 +2123,61 @@ public class MainGUI extends JFrame
                     //Add to db
                     try
                     {
-                        conn = DriverManager.getConnection(dbURL, username, password);
+                        conn = DriverManager.getConnection(dbURL, dbUsername, dbPassword);
                         statement = conn.createStatement();
+                        
+                        //Strings to hold product list and names
+                        String productList = "";
+                        String productName = "";
+                        
+                        //Create an appended list of products sold and quantity
+                        for(Product product: soldItems)
+                        {
+                            productList += productName;
+                            productName = ("Product: " + product.getProductName() + ", ");
+                        }
 
-                        String sql = "INSERT INTO sales VALUES('" + 
-                                Integer.parseInt(itemsSoldText.getText()) + "', ' "
-                                +  productNameText.getText() + "', '" + 
+                        String sql = "INSERT INTO sales VALUES('" +
+                                Integer.parseInt(employeeIDText.getText()) + "', '" +
+                                Integer.parseInt(itemsSoldText.getText()) + "', '" +
+                                productList + "', '" + 
                         Double.parseDouble(totalCostText.getText()) + "')";
 
                         statement.executeUpdate(sql);
                         
+                        //show confirm  
+                        JOptionPane.showMessageDialog(null, "Sales items added to the database",
+                            "Transaction Added", WIDTH);
+                        
                         //Clear ArrayList
                         soldItems.clear();
+                        
+                        //Clear TextBoxes
+                        clearSaleBoxes();
             
                     }
                     catch(SQLException error)
                     {
+                        JOptionPane.showMessageDialog(null, "An error has occurred", 
+                                "Error", WIDTH);
                         appendToFile(error);
                     }
-                    
-                    //show confirm  
-                    JOptionPane.showMessageDialog(null, "Sales items added to the database",
-                            "Transaction Added", WIDTH);
                 }
         }
+    }
+    
+    //Method for clearing sale textboxes
+    private void clearSaleBoxes()
+    {
+        //Clear textboxes
+        employeeIDText.setText("");
+        itemsSoldText.setText("0");
+        saleProductNameText.setText("");
+        saleProductNumberText.setText("");
+        saleProductDescriptionText.setText("");
+        saleProductCostText.setText("");
+        totalCostText.setText("0.00");
+        commissionPaidText.setText("0.00");
     }
     
     //private inner class for event handling
@@ -2381,20 +2915,117 @@ public class MainGUI extends JFrame
         }
     }
     
-    //method to search db for employee
-    private void searchEmployeeDB(String firstName, String lastName)
+    //private method to search db for transactions
+    private void searchTransactionDB(String employeeID)
     {
+        connectToDB();
+        
         try
         {
-            conn = DriverManager.getConnection(dbURL, dbUsername, dbPassword); 
+            //If connection was successful
+            if (conn != null)
+            {
+                statement = conn.createStatement();
+                        
+                String sql;
+                if ("".equals(employeeID))
+                {
+                    sql = "SELECT * FROM sales";
+                }
+                else
+                {
+                    sql = "SELECT * FROM sales WHERE empID = '" + 
+                        Integer.parseInt(employeeID) + "'";
+                }
+
+                result = statement.executeQuery(sql);  
+
+                //show confirm  
+                JOptionPane.showMessageDialog(null, "Searching the database... ",
+                    "Search", WIDTH);
+                
+                //Add data to the table
+                ResultSetMetaData metaData = result.getMetaData();
+        
+                //get the column names and store into vector
+                Vector<String> columnNames = new Vector<String>();
+                
+                //column count
+                int columnCount = metaData.getColumnCount();
+                
+                //loop to build the column names
+                for(int i=1; i<=columnCount;i++)
+                {
+                    columnNames.add(metaData.getColumnName(i));
+                }
+                
+                //Create the vector to hold the data(Vectors of Vectors)
+                //this vector all rows
+                Vector<Vector<Object>> tableData = new Vector<Vector<Object>>();
+                
+                if("".equals(employeeID))
+                {
+                    while(result.next())
+                    {
+                        //this will store each row
+                        Vector<Object> rowVector =  new Vector<Object>();
+                        //loop through the resultset and get each object/row
+                        for(int colIndex = 1; colIndex<=columnCount;colIndex++)
+                        {
+                            rowVector.add(result.getObject(colIndex));
+                        }
+                        tableData.add(rowVector);
+                    }
+                }
+                
+                else 
+                {
+                    //go through the resultset
+                    if(result.next())
+                    {
+                        //this will store each row
+                        Vector<Object> rowVector =  new Vector<Object>();
+                        //loop through the resultset and get each object/row
+                        for(int colIndex = 1; colIndex<=columnCount;colIndex++)
+                        {
+                            rowVector.add(result.getObject(colIndex));
+                        }
+                        tableData.add(rowVector);
+                    }
+                    else
+                    {
+                        JOptionPane.showMessageDialog(null, "No results were found",
+                                "Not Found", WIDTH);
+                    }
+                }
+          
+                //display the data into a JTable
+                JTable tempTable = new JTable(tableData, columnNames);
+                
+                //Remove empty transactionPane and revalidate
+                innerSearchSalesPanel.remove(transactionPane);
+                innerSearchSalesPanel.revalidate();
+                innerSearchSalesPanel.repaint();
+                
+                //Set transactionPane = new JScrollPane(tempTable) and add
+                transactionPane = new JScrollPane(tempTable);
+                transactionPane.setPreferredSize(tableSize);
+                innerSearchSalesPanel.add(transactionPane);            
+            }  
+            
         }
         catch(SQLException error)
         {
             JOptionPane.showMessageDialog(null, "An error has occurred", 
                     "Error", WIDTH);
-            
             appendToFile(error);
         }
+    }
+    
+    //method to search db for employee
+    private void searchEmployeeDB(String firstName, String lastName)
+    {
+        connectToDB();
         
         try
         {
@@ -2498,17 +3129,7 @@ public class MainGUI extends JFrame
     //Method to search for product
     private void searchProductDB(String productName, String productNumber)
     {
-        try
-        {
-            conn = DriverManager.getConnection(dbURL, dbUsername, dbPassword); 
-        }
-        catch(SQLException error)
-        {
-            JOptionPane.showMessageDialog(null, "An error has occurred", 
-                    "Error", WIDTH);
-            
-            appendToFile(error);
-        }
+        connectToDB();
         
         try
         {
@@ -2638,9 +3259,9 @@ public class MainGUI extends JFrame
     public static void main(String[] args)
     {   
         MainGUI gui = new MainGUI();
-        gui.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         gui.pack();
         gui.setVisible(false);
+        gui.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         
         //Set Location of JFrame to center
         gui.setLocationRelativeTo(null);
