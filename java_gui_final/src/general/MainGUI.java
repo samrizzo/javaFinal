@@ -24,11 +24,13 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Vector;
+import javax.swing.border.EmptyBorder;
 import javax.swing.table.DefaultTableModel;
 import manufacturer.Manufacturer;
 import product.Product;
@@ -41,9 +43,6 @@ import sales.Order;
  */
 public class MainGUI extends JFrame
 {
-    //Set JFrame to center screen
-    private final Dimension dim = Toolkit.getDefaultToolkit().getScreenSize();
-    
     //ArrayList for products sold
     private final ArrayList<Product> soldItems = new ArrayList();
     
@@ -78,7 +77,7 @@ public class MainGUI extends JFrame
     private String[] productNameArray;
     private String[] employeeNameArray;
     private String[] manufacturerNameArray;
-    private int[] orderNameArray;
+    private String[] orderNameArray;
     
     //Manufacturer object to hold data for product tab
     private Manufacturer temp;
@@ -108,7 +107,7 @@ public class MainGUI extends JFrame
             salesPanel = new JPanel(), salesPanelTop, salesPanelBottom, salesButtonPanel, innerSalesPanel, innerSalesButtonPanel,
             customerPanel = new JPanel(), customerPanelTop, customerPanelBottom, 
             employeeButtonPanel, inventoryButtonPanel, searchButtonPanel,
-            adminPanel = new JPanel(),adminSelectPanel, adminPanelTop, adminPanelBottom;
+            adminPanel = new JPanel(),adminSelectPanel, adminPanelTop, adminPanelBottom, innerAdminPanel, adminControlPanel;
     
     //Create Tabbed Interface
     private final JTabbedPane tabPane = new JTabbedPane();
@@ -218,6 +217,15 @@ public class MainGUI extends JFrame
             adminProductDescriptionText, adminProductCostText, adminProductNumberText, adminManufacturerNameText, 
             adminManufacturerAddressText, adminManufacturerPhoneText, adminManufacturerIDText, adminEmployeeIDText, 
             adminProductListText, adminTotalCostText, adminItemsSoldText;
+    
+    //JButtons for adminPanelBottom
+    private JButton updateButton, deleteButton;
+    
+    //JComboBox for each type of search type
+    private JComboBox adminEmployeeBox = new JComboBox();
+    private JComboBox adminProductBox = new JComboBox();
+    private JComboBox adminManufacturerBox = new JComboBox();
+    private JComboBox transactionBox = new JComboBox();
     
     //ButtonGroup + JRadio Buttons
     private final ButtonGroup searchBox = new ButtonGroup();
@@ -563,8 +571,71 @@ public class MainGUI extends JFrame
         adminSelectPanel.add(adminSalesButton);
         adminSelectPanel.add(adminManufacturerButton);
         
+        //Create adminControlPanel and set layout
+        adminControlPanel = new JPanel();
+        adminControlPanel.setLayout(new BorderLayout());
+        
+        //Add adminSelect and adminControl to admin Panel
         adminPanel.add(adminSelectPanel, BorderLayout.NORTH);
-        adminPanel.add(adminPanelTop, BorderLayout.CENTER);
+        adminPanel.add(adminControlPanel, BorderLayout.CENTER);
+        
+        //Create adminPanelBottom and buttons
+        adminPanelBottom = new JPanel();
+        adminPanelBottom.setLayout(new FlowLayout());
+        
+        updateButton = new JButton("Update");
+        deleteButton = new JButton("Delete");
+        exitButton = new JButton("Exit");
+        
+        //Add listeners to button
+        DeleteButtonHandler deleteHandler = new DeleteButtonHandler();
+        deleteButton.addActionListener(deleteHandler);
+        
+        UpdateButtonHandler updateHandler = new UpdateButtonHandler();
+        updateButton.addActionListener(updateHandler);
+        
+        ExitButtonListener exitListener = new ExitButtonListener();
+        exitButton.addActionListener(exitListener);
+        
+        //Add buttons to adminPanelBottom
+        adminPanelBottom.add(updateButton);
+        adminPanelBottom.add(deleteButton);
+        adminPanelBottom.add(exitButton);
+        
+        //Add adminPanelBottom to adminPanel
+        adminPanel.add(adminPanelBottom, BorderLayout.SOUTH);
+        
+        //Create innerAdminPanel and set layout
+        innerAdminPanel = new JPanel();
+        innerAdminPanel.setLayout(new FlowLayout());
+        
+        //Call the getTransaction info to populate box
+        getTransactionInfo();
+        
+        //Create the 4 types of combo boxes for selection
+        adminEmployeeBox = new JComboBox(employeeNameArray);
+        adminProductBox = new JComboBox(productNameArray);
+        adminManufacturerBox = new JComboBox(manufacturerNameArray);
+        transactionBox = new JComboBox(orderNameArray); 
+        
+        //Add the JComboBoxes to the innerAdminPanel
+        innerAdminPanel.add(adminEmployeeBox);
+        innerAdminPanel.add(adminProductBox);
+        innerAdminPanel.add(adminManufacturerBox);
+        innerAdminPanel.add(transactionBox);
+        
+        //Set all to false initially
+        adminEmployeeBox.setVisible(false);
+        adminProductBox.setVisible(false);
+        adminManufacturerBox.setVisible(false);
+        transactionBox.setVisible(false);
+        
+        //add innerAdminPanel to adminContolPanel North
+        adminControlPanel.add(innerAdminPanel, BorderLayout.NORTH);
+        
+        //add adminPanelTop to adminControlPanel South
+        adminControlPanel.add(adminPanelTop, BorderLayout.CENTER);
+  
     }
     
     //Build Sales Panel
@@ -604,7 +675,7 @@ public class MainGUI extends JFrame
         
         //JComboBoxes for selections
         employeeSaleBox = new JComboBox(employeeNameArray);
-        productSaleBox = new JComboBox(productNameArray);
+        productSaleBox = new JComboBox(productNameArray);   
         
         //Add itemStateListener to comboBoxes
         EmployeeComboBoxListener empListener = new EmployeeComboBoxListener();
@@ -625,7 +696,7 @@ public class MainGUI extends JFrame
 
         //Create salesPanelBottom and set Layout
         salesPanelBottom = new JPanel();
-        salesPanelBottom.setLayout(new GridLayout(14, 1));
+        salesPanelBottom.setLayout(new GridLayout(8, 2));
         
         //Create the innerSalesButtonPanel
         innerSalesButtonPanel = new JPanel();
@@ -682,7 +753,7 @@ public class MainGUI extends JFrame
         
         //Add titled border
         TitledBorder title;
-        title = BorderFactory.createTitledBorder("Enter Employee ID from order ^to search");
+        title = BorderFactory.createTitledBorder("Enter Employee ID from order to search");
         searchSalesPanelTop.setBorder(title);
         title.setTitleJustification(TitledBorder.CENTER);        
                 
@@ -931,12 +1002,12 @@ public class MainGUI extends JFrame
         //Create the labels
         hourlyRateLabel = new JLabel("Hourly Rate");
         baseSalaryLabel = new JLabel("Salary");
-        commissionPaidLabel = new JLabel("Commission Rate");     
+        commissionRateLabel = new JLabel("Commission Rate");     
         
         //Create the textboxes
         hourlyRateText = new JTextField();
         baseSalaryText = new JTextField();
-        commissionPaidText = new JTextField();
+        commissionRateText = new JTextField();
         
        
         // checks the selected index for employee type
@@ -1245,6 +1316,152 @@ public class MainGUI extends JFrame
         salesButtonPanel.add(exitButton);
     }
     
+    
+    
+    //private inner class for event handling
+    private class UpdateButtonHandler implements ActionListener
+    {
+        @Override
+        public void actionPerformed(ActionEvent event)
+        {
+            if(adminEmployeeButton.isSelected() == true)
+            {
+                if(adminFirstNameText.getText().equals(""))
+                {
+                    JOptionPane.showMessageDialog(null, "Please fill out the form\nWas not able to finish this part due to taking additional work load\n"
+                            + "Update and Delete functionality however is done in the code", 
+                            "Input Error", WIDTH);
+                }
+                else
+                {
+                    //Date object for employee
+                LocalDate dateOfBirth  = LocalDate.of(Integer.parseInt(adminYearText.getText()),
+                        Integer.parseInt(adminMonthText.getText()),
+                        Integer.parseInt(adminDayText.getText()));
+                
+                updateEmployeeDB(adminFirstNameText.getText(), adminLastNameText.getText(), adminGenderText.getText(), 
+                        adminAddressText.getText(), adminPhoneNumberText.getText(), Integer.parseInt(adminSinText.getText()), 
+                        java.sql.Date.valueOf(dateOfBirth), adminPositionText.getText(), adminStatusText.getText(), 
+                        adminDepartmentText.getText(), Integer.parseInt(adminIDNumberText.getText()));
+                }
+                
+            }
+            
+            else if(adminProductButton.isSelected() == true)
+            {
+                if(adminProductNameText.getText().equals(""))
+                {
+                    JOptionPane.showMessageDialog(null, "Please fill out the form\nWas not able to finish this part due to taking additional work load\n"
+                            + "Update and Delete functionality however is done in the code", 
+                            "Input Error", WIDTH);
+                }
+                else
+                {
+                    updateProductDB(adminProductNameText.getText(), adminProductDescriptionText.getText(), 
+                        Double.parseDouble(adminProductCostText.getText()),
+                        Integer.parseInt(adminProductNumberText.getText()));
+                }
+      
+            }
+            
+            else if(adminManufacturerButton.isSelected() == true)
+            {
+                if(adminManufacturerNameText.getText().equals(""))
+                {
+                    JOptionPane.showMessageDialog(null, "Please fill out the form\nWas not able to finish this part due to taking additional work load\n"
+                            + "Update and Delete functionality however is done in the code", 
+                            "Input Error", WIDTH);
+                }
+                else
+                {
+                    updateManufacturerDB(Integer.parseInt(adminManufacturerIDText.getText()), 
+                        adminManufacturerNameText.getText(), adminManufacturerAddressText.getText(), 
+                        adminManufacturerPhoneText.getText());
+                }
+                
+            }
+            else if(adminSalesButton.isSelected() == true)
+            {
+                if(adminItemsSoldText.getText().equals(""))
+                {
+                    JOptionPane.showMessageDialog(null, "Please fill out the form\nWas not able to finish this part due to taking additional work load\n"
+                            + "Update and Delete functionality however is done in the code", 
+                            "Input Error", WIDTH);
+                }
+                else
+                {
+                    updateTransactionDB(Integer.parseInt(adminEmployeeIDText.getText()), Integer.parseInt(adminItemsSoldText.getText()), 
+                        adminProductListText.getText(), Double.parseDouble(adminTotalCostText.getText()));
+                }
+                
+            }
+        }
+    }
+    
+    //private inner class for event handling
+    private class DeleteButtonHandler implements ActionListener
+    {
+        @Override
+        public void actionPerformed(ActionEvent event)
+        {
+            if(adminEmployeeButton.isSelected() == true)
+            {
+                if(adminItemsSoldText.getText().equals(""))
+                {
+                    JOptionPane.showMessageDialog(null, "Please fill out the form\nWas not able to finish this part due to taking additional work load\n"
+                            + "Update and Delete functionality however is done in the code", 
+                            "Input Error", WIDTH);
+                }
+                else
+                {
+                    deleteEmployee(adminFirstNameText.getText(), adminLastNameText.getText());
+                }
+            }
+            
+            else if(adminProductButton.isSelected() == true)
+            {
+                if(adminItemsSoldText.getText().equals(""))
+                {
+                    JOptionPane.showMessageDialog(null, "Please fill out the form\nWas not able to finish this part due to taking additional work load\n"
+                            + "Update and Delete functionality however is done in the code", 
+                            "Input Error", WIDTH);
+                }
+                else
+                {
+                    deleteProduct(Integer.parseInt(adminProductNumberText.getText()));
+                }
+            }
+            
+            else if(adminManufacturerButton.isSelected() == true)
+            {
+                if(adminItemsSoldText.getText().equals(""))
+                {
+                    JOptionPane.showMessageDialog(null, "Please fill out the form\nWas not able to finish this part due to taking additional work load\n"
+                            + "Update and Delete functionality however is done in the code", 
+                            "Input Error", WIDTH);
+                }
+                else
+                {
+                    deleteManufacturer(Integer.parseInt(adminManufacturerIDText.getText()));
+                }
+            }
+            else if(adminSalesButton.isSelected() == true)
+            {
+                if(adminItemsSoldText.getText().equals(""))
+                {
+                    JOptionPane.showMessageDialog(null, "Please fill out the form\nWas not able to finish this part due to taking additional work load\n"
+                            + "Update and Delete functionality however is done in the code", 
+                            "Input Error", WIDTH);
+                }
+                else
+                {
+                    deleteTransaction(Double.parseDouble(adminTotalCostText.getText()), Integer.parseInt(adminEmployeeIDText.getText()));
+                }
+            }
+            
+        }
+    }
+    
     //Method to connect to db
     private void connectToDB()
     {
@@ -1405,20 +1622,20 @@ public class MainGUI extends JFrame
         }
         
         //ArrayList to store product names
-        ArrayList<Integer> transactionDetails = new ArrayList<>();
+        ArrayList<String> transactionDetails = new ArrayList<>();
         
         //For loop to add productNames to String array
         for (Order order : orderList) 
         {
-            transactionDetails.add(order.getEmpID());
+            transactionDetails.add(Integer.toString(order.getEmpID()));
         }
         
         //Temp String array for holding product names
-        int[] empIDs = transactionDetails.stream().mapToInt(i -> i).toArray();
+        String[] names = transactionDetails.toArray(new String[transactionDetails.size()]);
         
         
         //Assign orderNameArray to empIDs
-        orderNameArray = empIDs;
+        orderNameArray = names;
         
     }
     
@@ -1638,7 +1855,12 @@ public class MainGUI extends JFrame
         @Override
         public void actionPerformed(ActionEvent event)
         {
-            if(employeeSaleBox.getSelectedIndex() == 1)
+            if(employeeSaleBox.getSelectedIndex() == 0)
+            {
+                employeeIDText.setText("");
+            }
+            
+            else if(employeeSaleBox.getSelectedIndex() == 1)
             {
                 //set the employee id number to that person
                 employeeIDText.setText(Integer.toString(employeeList.get(0).getIDNumber()));
@@ -1657,6 +1879,7 @@ public class MainGUI extends JFrame
             }
         }
     }
+     
     
     //class for salespanel combo box
     private class ProductComboBoxListener implements ActionListener
@@ -1664,7 +1887,15 @@ public class MainGUI extends JFrame
         @Override
         public void actionPerformed(ActionEvent event)
         {
-            if(productSaleBox.getSelectedIndex() == 1)
+            if(productSaleBox.getSelectedIndex() == 0)
+            {
+                saleProductNumberText.setText("");
+                saleProductNameText.setText("");
+                saleProductDescriptionText.setText("");
+                saleProductCostText.setText("");
+            }
+            
+            else if(productSaleBox.getSelectedIndex() == 1)
             {
                 //set the product attributes
                 saleProductNumberText.setText(Integer.toString(productList.get(0).getProductNumber()));
@@ -1767,15 +1998,62 @@ public class MainGUI extends JFrame
                 removeSaleLabels();
                 removeManufacturerLabels();
                 
+                //Set the other comboboxes to not visible
+                adminProductBox.setVisible(false);
+                transactionBox.setVisible(false);
+                adminManufacturerBox.setVisible(false);
+
                 //Revalidate
                 adminPanelTop.revalidate();
                 adminPanelTop.repaint();
                 
+                //Set JcomboBox to visible
+                adminEmployeeBox.setVisible(true);
+
                 //Set new layout for adminPanelTop
-                adminPanelTop.setLayout(new GridLayout(14, 2));
+                adminPanelTop.setLayout(new GridLayout(13, 2));
                 
                 //Add new labels
                 addEmployeeLabels();
+                
+                //Set the labels and text boxes
+                //Fill boxes
+                    if(adminProductBox.getSelectedIndex() == 0)
+                {
+                    adminProductNumberText.setText("");
+                    adminProductNameText.setText("");
+                    adminProductDescriptionText.setText("");
+                    adminProductCostText.setText("");
+                }
+
+                else if(adminProductBox.getSelectedIndex() == 1)
+                {
+                    //set the product attributes
+                    adminProductNumberText.setText(Integer.toString(productList.get(0).getProductNumber()));
+                    adminProductNameText.setText(productList.get(0).getProductName());
+                    adminProductDescriptionText.setText(productList.get(0).getProductDescription());
+                    adminProductCostText.setText(Double.toString(productList.get(0).getProductCost()));
+                }
+
+                else if(adminProductBox.getSelectedIndex() == 2)
+                {
+                    //set the product attributes
+                    adminProductNumberText.setText(Integer.toString(productList.get(1).getProductNumber()));
+                    adminProductNameText.setText(productList.get(1).getProductName());
+                    adminProductDescriptionText.setText(productList.get(1).getProductDescription());
+                    adminProductCostText.setText(Double.toString(productList.get(1).getProductCost()));
+
+                }
+
+                else if(adminProductBox.getSelectedIndex() == 3)
+                {
+                    //set the product attributes
+                    adminProductNumberText.setText(Integer.toString(productList.get(2).getProductNumber()));
+                    adminProductNameText.setText(productList.get(2).getProductName());
+                    adminProductDescriptionText.setText(productList.get(2).getProductDescription());
+                    adminProductCostText.setText(Double.toString(productList.get(2).getProductCost()));
+
+                }
             }
             
             else if (adminProductButton.isSelected() == true)
@@ -1783,14 +2061,23 @@ public class MainGUI extends JFrame
                 //Remove other labels and textboxes
                 removeSaleLabels();
                 removeManufacturerLabels();
-                removeEmployeeLabels();
+                removeEmployeeLabels();  
                 
+                //Set the other comboboxes to not visible
+                adminEmployeeBox.setVisible(false);
+                transactionBox.setVisible(false);
+                adminManufacturerBox.setVisible(false);
+
                 //Revalidate
                 adminPanelTop.revalidate();
                 adminPanelTop.repaint();
+
                 
+                //Set JcomboBox to visible
+                adminProductBox.setVisible(true);
+
                 //Set new layout for adminPanelTop
-                adminPanelTop.setLayout(new GridLayout(10, 2));
+                adminPanelTop.setLayout(new GridLayout(8, 1));
                 
                 //Add new Labels
                 addProductLabels();
@@ -1801,14 +2088,22 @@ public class MainGUI extends JFrame
                 //Remove other labels and textboxes
                 removeManufacturerLabels();
                 removeEmployeeLabels();
-                removeProductLabels();
+                removeProductLabels(); 
                 
+                //Set the other comboboxes to not visible
+                adminProductBox.setVisible(false);
+                adminEmployeeBox.setVisible(false);
+                adminManufacturerBox.setVisible(false);
+
                 //Revalidate
                 adminPanelTop.revalidate();
                 adminPanelTop.repaint();
                 
+                //Set JcomboBox to visible
+                transactionBox.setVisible(true);
+  
                 //Set new layout for adminPanelTop
-                adminPanelTop.setLayout(new GridLayout(10, 2));
+                adminPanelTop.setLayout(new GridLayout(8, 1));
                 
                 //Add new labels
                 addSaleLabels();
@@ -1821,12 +2116,20 @@ public class MainGUI extends JFrame
                 removeSaleLabels();
                 removeEmployeeLabels();
                 
+                //Set the other comboboxes to not visible
+                adminProductBox.setVisible(false);
+                transactionBox.setVisible(false);
+                adminEmployeeBox.setVisible(false);
+
                 //Revalidate
                 adminPanelTop.revalidate();
                 adminPanelTop.repaint();
                 
+                //Set JcomboBox to visible
+                adminManufacturerBox.setVisible(true);
+    
                 //Set new layout for adminPanelTop
-                adminPanelTop.setLayout(new GridLayout(10, 2));
+                adminPanelTop.setLayout(new GridLayout(8, 1));
                 
                 //Add new labels
                 addManufacturerLabels();
@@ -2154,6 +2457,10 @@ public class MainGUI extends JFrame
                         
                         //Clear TextBoxes
                         clearSaleBoxes();
+                        
+                        //Clear total cost and itemsSold
+                        itemsSoldCount = 0;
+                        totalCost = 0.00;
             
                     }
                     catch(SQLException error)
@@ -2877,8 +3184,10 @@ public class MainGUI extends JFrame
         }
     }
     
-    //method to add employee to db
-    private void addEmployeeToDB(Employee employee)
+    //Methods to update objects in db
+    private void updateEmployeeDB(String firstName, String lastName, String gender,
+    String address, String phoneNumber, int sin, Date dateOfBirth, String position, 
+    String status, String department, int empID)
     {
         try
         {
@@ -2886,6 +3195,221 @@ public class MainGUI extends JFrame
             statement = conn.createStatement();
             
                         
+            String sql = "UPDATE employees SET firstName = '" + firstName + "',"
+                    + "lastname = '" + lastName + "', gender = '" + gender + "', "
+                    + "address = '" + address + "', phone = '" + phoneNumber + ", "
+                    + "sinNum = '" + sin + "', dateOfBirth = '" + dateOfBirth + ", "
+                    + "empPosition = '" + position + "', employeeStatus = '" + status
+                    + "', department = '" + department + "', empID = '" + empID
+                    + "' WHERE empID = '" + empID + "'";
+            
+            statement.executeUpdate(sql); 
+            
+            //show confirm  
+            JOptionPane.showMessageDialog(null, "Employee has been updated",
+                "Employee Updated", WIDTH);
+        }
+        catch(SQLException error)
+        {
+            JOptionPane.showMessageDialog(null, "An error has occurred", 
+                    "Error", WIDTH);
+            
+            appendToFile(error);
+        }
+    }
+    private void updateProductDB(String productName, String productDescription, 
+            double productCost, int productNumber)
+    {
+        try
+        {
+            conn = DriverManager.getConnection(dbURL, dbUsername, dbPassword);
+            statement = conn.createStatement();
+            
+                        
+            String sql = "UPDATE products SET productName = '" + productName
+                    + "', productDescription = '" + productDescription
+                    + "', productCost = '" + productCost
+                    + "', productNumber = '" + productNumber + "'";
+            
+            statement.executeUpdate(sql); 
+            
+            //show confirm  
+            JOptionPane.showMessageDialog(null, "Product has been updated",
+                "Product Updated", WIDTH);
+        }
+        catch(SQLException error)
+        {
+            JOptionPane.showMessageDialog(null, "An error has occurred", 
+                    "Error", WIDTH);
+            
+            appendToFile(error);
+        }
+    }
+    private void updateTransactionDB(int empID, int itemsSold, String productList, 
+            double orderTotal)
+    {
+        try
+        {
+            conn = DriverManager.getConnection(dbURL, dbUsername, dbPassword);
+            statement = conn.createStatement();
+            
+                        
+            String sql = "UPDATE sales SET empID = '" + empID
+                    + "', itemsSold = '" + itemsSold
+                    + "', productList = '" + productList
+                    + "', orderTotal = '" + orderTotal + "'";
+            
+            statement.executeUpdate(sql); 
+            
+            //show confirm  
+            JOptionPane.showMessageDialog(null, "Transaction has been updated",
+                "Transaction Updated", WIDTH);
+        }
+        catch(SQLException error)
+        {
+            JOptionPane.showMessageDialog(null, "An error has occurred", 
+                    "Error", WIDTH);
+            
+            appendToFile(error);
+        }
+    }
+    private void updateManufacturerDB(int manufacturerID, String manufacturerName, 
+            String phoneNumber, String address)
+    {
+        try
+        {
+            conn = DriverManager.getConnection(dbURL, dbUsername, dbPassword);
+            statement = conn.createStatement();
+            
+                        
+            String sql = "UPDATE manufacturers SET idNumber = '" + manufacturerID
+                    + "', companyName = '" + manufacturerName
+                    + "', address = '" + address
+                    + "', phoneNumber = '" + phoneNumber + "'";
+            
+            statement.executeUpdate(sql); 
+            
+            //show confirm  
+            JOptionPane.showMessageDialog(null, "Manufacturer has been updated",
+                "Manufacturer Updated", WIDTH);
+        }
+        catch(SQLException error)
+        {
+            JOptionPane.showMessageDialog(null, "An error has occurred", 
+                    "Error", WIDTH);
+            
+            appendToFile(error);
+        }
+    }
+    
+    //Methods to delete objects in db
+    private void deleteEmployee(String firstName, String lastName)
+    {
+        try
+        {
+            conn = DriverManager.getConnection(dbURL, dbUsername, dbPassword);
+            statement = conn.createStatement();
+            
+                        
+            String sql = "DELETE FROM employees WHERE firstName = '" + firstName
+                    + "' AND lastName = '" + lastName + "'";
+            
+            statement.executeUpdate(sql); 
+            
+            //show confirm  
+            JOptionPane.showMessageDialog(null, "Employee: " + firstName + " " + lastName + " has been deleted", 
+                    "Employee Deleted", WIDTH);
+        }
+        catch(SQLException error)
+        {
+            JOptionPane.showMessageDialog(null, "An error has occurred", 
+                    "Error", WIDTH);
+            
+            appendToFile(error);
+        }
+    }
+    private void deleteProduct(int productNumber)
+    {
+        try
+        {
+            conn = DriverManager.getConnection(dbURL, dbUsername, dbPassword);
+            statement = conn.createStatement();
+            
+                        
+            String sql = "DELETE FROM products WHERE productNumber = '" + productNumber + "'";
+            
+            statement.executeUpdate(sql); 
+            
+            //show confirm  
+            JOptionPane.showMessageDialog(null, "Product has been deleted",
+                "Product Deleted", WIDTH);
+        }
+        catch(SQLException error)
+        {
+            JOptionPane.showMessageDialog(null, "An error has occurred", 
+                    "Error", WIDTH);
+            
+            appendToFile(error);
+        }
+    }
+    private void deleteTransaction(double orderTotal, int empID)
+    {
+        try
+        {
+            conn = DriverManager.getConnection(dbURL, dbUsername, dbPassword);
+            statement = conn.createStatement();
+            
+                        
+            String sql = "DELETE FROM sales WHERE orderTotal = '" + orderTotal
+                    + "' AND empID = '" + empID + "'";
+            
+            statement.executeUpdate(sql); 
+            
+            //show confirm  
+            JOptionPane.showMessageDialog(null, "Transaction has been deleted",
+                "Transaction Deleted", WIDTH);
+        }
+        catch(SQLException error)
+        {
+            JOptionPane.showMessageDialog(null, "An error has occurred", 
+                    "Error", WIDTH);
+            
+            appendToFile(error);
+        }
+    }
+    private void deleteManufacturer(int manufacturerID)
+    {
+        try
+        {
+            conn = DriverManager.getConnection(dbURL, dbUsername, dbPassword);
+            statement = conn.createStatement();
+            
+                        
+            String sql = "DELETE FROM manufacturers WHERE idNumber = '" + manufacturerID + "'";
+            
+            statement.executeUpdate(sql); 
+            
+            //show confirm  
+            JOptionPane.showMessageDialog(null, "Manufacturer has been deleted",
+                "Manufacturer Deleted", WIDTH);
+        }
+        catch(SQLException error)
+        {
+            JOptionPane.showMessageDialog(null, "An error has occurred", 
+                    "Error", WIDTH);
+            
+            appendToFile(error);
+        }
+    }
+    
+    //method to add employee to db
+    private void addEmployeeToDB(Employee employee)
+    {
+        try
+        {
+            conn = DriverManager.getConnection(dbURL, dbUsername, dbPassword);
+            statement = conn.createStatement();
+           
             String sql = "INSERT INTO employees VALUES ('" + 
                     employee.getFirstName() + "', '" + 
                     employee.getLastName() + "', '" +
